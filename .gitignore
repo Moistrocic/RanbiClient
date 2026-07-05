@@ -88,6 +88,9 @@ target
 /integration_test/*
 /source_date_epoch
 
+# Claude AI context files
+CLAUDE*.md
+
 # IDE project files
 .cache
 .cproject
