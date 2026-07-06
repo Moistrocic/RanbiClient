@@ -11,6 +11,8 @@
 
 CRanbiClient::CRanbiClient()
 {
+	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+		m_aLastSkinChangeTick[Dummy] = 0;
 	OnReset();
 }
 
@@ -88,25 +90,31 @@ void CRanbiClient::OnUpdate()
 
 			if(NeedChange)
 			{
-				if(Dummy == 0)
+				int CurTick = Client()->GameTick(Dummy);
+				if(CurTick - m_aLastSkinChangeTick[Dummy] > Client()->GameTickSpeed())
 				{
-					str_copy(g_Config.m_ClPlayerSkin, CollidedClient.m_aSkinName);
-					g_Config.m_ClPlayerUseCustomColor = CollidedClient.m_UseCustomColor;
-					g_Config.m_ClPlayerColorBody = CollidedClient.m_ColorBody;
-					g_Config.m_ClPlayerColorFeet = CollidedClient.m_ColorFeet;
-				}
-				else
-				{
-					str_copy(g_Config.m_ClDummySkin, CollidedClient.m_aSkinName);
-					g_Config.m_ClDummyUseCustomColor = CollidedClient.m_UseCustomColor;
-					g_Config.m_ClDummyColorBody = CollidedClient.m_ColorBody;
-					g_Config.m_ClDummyColorFeet = CollidedClient.m_ColorFeet;
-				}
+					m_aLastSkinChangeTick[Dummy] = CurTick;
 
-				if(Dummy == 0)
-					GameClient()->SendInfo(false);
-				else
-					GameClient()->SendDummyInfo(false);
+					if(Dummy == 0)
+					{
+						str_copy(g_Config.m_ClPlayerSkin, CollidedClient.m_aSkinName);
+						g_Config.m_ClPlayerUseCustomColor = CollidedClient.m_UseCustomColor;
+						g_Config.m_ClPlayerColorBody = CollidedClient.m_ColorBody;
+						g_Config.m_ClPlayerColorFeet = CollidedClient.m_ColorFeet;
+					}
+					else
+					{
+						str_copy(g_Config.m_ClDummySkin, CollidedClient.m_aSkinName);
+						g_Config.m_ClDummyUseCustomColor = CollidedClient.m_UseCustomColor;
+						g_Config.m_ClDummyColorBody = CollidedClient.m_ColorBody;
+						g_Config.m_ClDummyColorFeet = CollidedClient.m_ColorFeet;
+					}
+
+					if(Dummy == 0)
+						GameClient()->SendInfo(false);
+					else
+						GameClient()->SendDummyInfo(false);
+				}
 			}
 			return;
 		}

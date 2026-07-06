@@ -1,6 +1,7 @@
 #ifndef GAME_CLIENT_COMPONENTS_RANBI_RANBI_CLIENT_H
 #define GAME_CLIENT_COMPONENTS_RANBI_RANBI_CLIENT_H
 
+#include <engine/client/enums.h>
 #include <engine/console.h>
 #include <engine/shared/protocol.h>
 
@@ -55,6 +56,7 @@ public:
 	std::vector<SWeaponInfo> m_vWeapons;
 
 private:
+	int m_aLastSkinChangeTick[NUM_DUMMIES];
 	static void ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData);
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 };
