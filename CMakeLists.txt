@@ -2598,6 +2598,8 @@ if(CLIENT)
     components/race_demo.cpp
     components/race_demo.h
     components/ranbi/menus_ranbi.cpp
+    components/ranbi/points.cpp
+    components/ranbi/points.h
     components/ranbi/ranbi_client.cpp
     components/ranbi/ranbi_client.h
     components/ranbi/render_proxy.cpp

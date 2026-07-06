@@ -117,6 +117,7 @@ void CGameClient::OnConsoleInit()
 
 	// make a list of all the systems, make sure to add them in the correct render order
 	m_vpAll.insert(m_vpAll.end(), {&m_RenderProxy,
+						      &m_Points,
 						      &m_RanbiClient,
 					      &m_Skins,
 					      &m_Skins7,

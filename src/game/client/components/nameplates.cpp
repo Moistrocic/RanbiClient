@@ -1147,7 +1147,8 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 
 	// RANBICLIENT m_RcNameplatesShowPoints
 	Data.m_ShowPoints = Data.m_ShowName && g_Config.m_RcNameplatesShowPoints;
-	Data.m_Points = -1;
+	Data.m_Points = Data.m_ShowPoints ? GameClient()->m_Points.GetPoints(Data.m_aName) : -1;
+	Data.m_ShowPoints = Data.m_ShowPoints && Data.m_Points != -1;
 
 	// RANBICLIENT m_RcNameplatesShowPositionX
 	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX;
@@ -1243,8 +1244,8 @@ void CNamePlates::RenderNamePlatePreview(vec2 Position, int Dummy)
 
 	// RANBICLIENT custom nameplate data (preview)
 	// RANBICLIENT m_RcNameplatesShowPoints
-	Data.m_ShowPoints = Data.m_ShowName && g_Config.m_RcNameplatesShowPoints;
-	Data.m_Points = -1;
+	Data.m_ShowPoints = g_Config.m_RcNameplatesShowPoints;
+	Data.m_Points = GameClient()->m_Points.GetPoints(Data.m_aName);
 
 	// RANBICLIENT m_RcNameplatesShowPositionX
 	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX;

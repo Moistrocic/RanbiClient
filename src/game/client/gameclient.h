@@ -59,6 +59,7 @@
 #include "components/particles.h"
 #include "components/players.h"
 #include "components/race_demo.h"
+#include "components/ranbi/points.h"
 #include "components/ranbi/ranbi_client.h"
 #include "components/ranbi/render_proxy.h"
 #include "components/scoreboard.h"
@@ -240,6 +241,7 @@ public:
 	// RanbiClient Components
 	CRanbiClient m_RanbiClient;
 	CRenderProxy m_RenderProxy;
+	CPoints m_Points;
 
 private:
 	std::vector<class CComponent *>
