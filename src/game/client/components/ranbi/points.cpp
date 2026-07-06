@@ -39,7 +39,7 @@ void CPoints::OnRender()
 		RemovePoints(Name);
 	}
 
-	std::lock_guard<std::mutex> LockCache(m_PointsMutex);
+	std::unique_lock LockCache(m_PointsMutex);
 	std::set<std::string> NameSet;
 	for(const CNetObj_PlayerInfo *pInfo : GameClient()->m_Snap.m_apInfoByName)
 	{
@@ -73,7 +73,7 @@ void CPoints::FinishRequest(const std::string &Name)
 
 int CPoints::GetPoints(const std::string &Name)
 {
-	std::lock_guard<std::mutex> Lock(m_PointsMutex);
+	std::unique_lock LockPoints(m_PointsMutex);
 	if(!m_PointsCache.contains(Name))
 	{
 		m_PointsCache.insert_or_assign(Name, -1);
@@ -89,13 +89,13 @@ int CPoints::GetPoints(const std::string &Name)
 
 void CPoints::RemovePoints(const std::string &Name)
 {
-	std::lock_guard<std::mutex> Lock(m_PointsMutex);
+	std::unique_lock LockPoints(m_PointsMutex);
 	m_PointsCache.erase(Name);
 }
 
 void CPoints::ClearPoints()
 {
-	std::lock_guard<std::mutex> Lock(m_PointsMutex);
+	std::unique_lock LockPoints(m_PointsMutex);
 	m_PointsCache.clear();
 }
 
