@@ -3,6 +3,8 @@
 #include <engine/textrender.h>
 
 #include <game/client/components/menus.h>
+#include <game/client/components/ranbi/ranbi_client.h>
+#include <game/client/gameclient.h>
 #include <game/client/ui.h>
 #include <game/client/ui_scrollregion.h>
 #include <game/localization.h>
@@ -247,17 +249,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	s_ScrollRegion.End();
 }
 
-struct SWeaponInfo
-{
-	int m_WeaponID;
-	float m_AngleStart;
-	float m_AngleEnd;
-	unsigned int m_Color;
-	char m_aNote[64];
-};
-
 static int s_SelectedWeapon = -1;
-static std::vector<SWeaponInfo> s_vWeapons = {};
 
 static const char *s_apWeaponNames[] = {
 	"Hammer", "Gun", "Shotgun", "Grenade", "Laser", "Ninja"};
@@ -274,6 +266,7 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 {
 	static int s_LastSelected = -1;
 	CUIRect LeftView, RightView, Label, Button;
+	auto &vWeapons = GameClient()->m_RanbiClient.m_vWeapons;
 
 	MainView.VSplitMid(&LeftView, &RightView, s_MarginBetweenViews);
 	LeftView.VSplitLeft(s_MarginSmall, nullptr, &LeftView);
@@ -297,8 +290,8 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 	if(s_SelectedWeapon != s_LastSelected)
 	{
 		s_LastSelected = s_SelectedWeapon;
-		if(s_SelectedWeapon >= 0 && s_SelectedWeapon < (int)s_vWeapons.size())
-			s_EditWeapon = s_vWeapons[s_SelectedWeapon];
+		if(s_SelectedWeapon >= 0 && s_SelectedWeapon < (int)vWeapons.size())
+			s_EditWeapon = vWeapons[s_SelectedWeapon];
 	}
 
 	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
@@ -375,19 +368,19 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 
 	if(DoButton_Menu(&s_AddButton, RCLocalize("Add"), 0, &BtnAdd))
 	{
-		s_vWeapons.push_back(s_EditWeapon);
-		s_SelectedWeapon = (int)s_vWeapons.size() - 1;
+		vWeapons.push_back(s_EditWeapon);
+		s_SelectedWeapon = (int)vWeapons.size() - 1;
 		s_EditWeapon = SWeaponInfo{};
 		s_AngleInit = false;
 	}
 	if(DoButton_Menu(&s_ModifyButton, RCLocalize("Modify"), 0, &BtnModify) && s_SelectedWeapon >= 0)
 	{
-		s_vWeapons[s_SelectedWeapon] = s_EditWeapon;
+		vWeapons[s_SelectedWeapon] = s_EditWeapon;
 		s_LastSelected = -1;
 	}
 	if(DoButton_Menu(&s_DeleteButton, RCLocalize("Delete"), 0, &BtnDelete) && s_SelectedWeapon >= 0)
 	{
-		s_vWeapons.erase(s_vWeapons.begin() + s_SelectedWeapon);
+		vWeapons.erase(vWeapons.begin() + s_SelectedWeapon);
 		s_SelectedWeapon = -1;
 		s_LastSelected = -1;
 		s_EditWeapon = SWeaponInfo{};
@@ -428,13 +421,13 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 
 	// Build sorted indices: group by WeaponID, then sort by AngleStart within each group
 	static std::vector<int> s_SortedIndices;
-	s_SortedIndices.resize(s_vWeapons.size());
-	for(int i = 0; i < (int)s_vWeapons.size(); i++)
+	s_SortedIndices.resize(vWeapons.size());
+	for(int i = 0; i < (int)vWeapons.size(); i++)
 		s_SortedIndices[i] = i;
-	std::sort(s_SortedIndices.begin(), s_SortedIndices.end(), [](int a, int b) {
-		if(s_vWeapons[a].m_WeaponID != s_vWeapons[b].m_WeaponID)
-			return s_vWeapons[a].m_WeaponID < s_vWeapons[b].m_WeaponID;
-		return s_vWeapons[a].m_AngleStart < s_vWeapons[b].m_AngleStart;
+	std::sort(s_SortedIndices.begin(), s_SortedIndices.end(), [&vWeapons](int a, int b) {
+		if(vWeapons[a].m_WeaponID != vWeapons[b].m_WeaponID)
+			return vWeapons[a].m_WeaponID < vWeapons[b].m_WeaponID;
+		return vWeapons[a].m_AngleStart < vWeapons[b].m_AngleStart;
 	});
 
 	for(int si = 0; si < (int)s_SortedIndices.size(); si++)
@@ -456,16 +449,16 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 		char aBuf[64];
 		Row.VSplitLeft(ColWeapon, &Cell, &Row);
 		Row.VSplitLeft(ColSpacing, nullptr, &Row);
-		Ui()->DoLabel(&Cell, GetWeaponName(s_vWeapons[i].m_WeaponID), s_FontSize, TEXTALIGN_ML);
+		Ui()->DoLabel(&Cell, GetWeaponName(vWeapons[i].m_WeaponID), s_FontSize, TEXTALIGN_ML);
 
 		Row.VSplitLeft(ColAngle, &Cell, &Row);
 		Row.VSplitLeft(ColSpacing, nullptr, &Row);
-		str_format(aBuf, sizeof(aBuf), "%.2f~%.2f", s_vWeapons[i].m_AngleStart, s_vWeapons[i].m_AngleEnd);
+		str_format(aBuf, sizeof(aBuf), "%.2f~%.2f", vWeapons[i].m_AngleStart, vWeapons[i].m_AngleEnd);
 		Ui()->DoLabel(&Cell, aBuf, s_FontSize, TEXTALIGN_ML);
 
 		Row.VSplitLeft(ColColor, &Cell, &Row);
 		Row.VSplitLeft(ColSpacing, nullptr, &Row);
-		ColorRGBA Col = color_cast<ColorRGBA>(ColorHSLA(s_vWeapons[i].m_Color, false));
+		ColorRGBA Col = color_cast<ColorRGBA>(ColorHSLA(vWeapons[i].m_Color, false));
 		Graphics()->TextureClear();
 		Graphics()->QuadsBegin();
 		Graphics()->SetColor(Col.r, Col.g, Col.b, 1.0f);
@@ -473,10 +466,10 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 		Graphics()->QuadsDrawTL(&QuadColor, 1);
 		Graphics()->QuadsEnd();
 
-		Ui()->DoLabel(&Row, s_vWeapons[i].m_aNote, s_FontSize, TEXTALIGN_ML);
+		Ui()->DoLabel(&Row, vWeapons[i].m_aNote, s_FontSize, TEXTALIGN_ML);
 	}
 
-	if(!s_vWeapons.empty())
+	if(!vWeapons.empty())
 		ListBox.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.15f), IGraphics::CORNER_B, 5.0f);
 }
 
