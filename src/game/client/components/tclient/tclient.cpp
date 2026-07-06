@@ -102,7 +102,7 @@ void CTClient::OnInit()
 {
 	TextRender()->SetCustomFace(g_Config.m_TcCustomFont);
 	m_pGraphics = Kernel()->RequestInterface<IEngineGraphics>();
-	FetchTClientInfo();
+	m_FetchedTClientInfo = true;
 
 	char aError[512] = "";
 	if(!Storage()->FileExists("tclient/gui_logo.png", IStorage::TYPE_ALL))
@@ -562,7 +562,7 @@ void CTClient::OnRender()
 
 bool CTClient::NeedUpdate()
 {
-	return str_comp(m_aVersionStr, "0") != 0;
+	return false;
 }
 
 void CTClient::ResetTClientInfoTask()
