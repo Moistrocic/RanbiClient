@@ -1039,6 +1039,13 @@ void CChat::OnPrepareLines(float y)
 			}
 		}
 
+		// RANBICLIENT m_RcChatShowPoints
+		bool ShowPoints = g_Config.m_RcChatShowPoints && Line.m_ClientId >= 0 && Line.m_aName[0] != '\0' && str_comp(Line.m_aName, "*** ") != 0 && str_comp(Line.m_aName, "— ") != 0;
+		int Points = ShowPoints ? GameClient()->m_Points.GetPoints(Line.m_aName) : -1;
+		ShowPoints = ShowPoints && Points != -1;
+		char aPointBuf[16];
+		str_format(aPointBuf, sizeof(aPointBuf), "[%d] ", Points);
+
 		// get the y offset (calculate it if we haven't done that yet)
 		if(Line.m_aYOffset[OffsetType] < 0.0f)
 		{
@@ -1058,6 +1065,8 @@ void CChat::OnPrepareLines(float y)
 				}
 			}
 
+			if(ShowPoints)
+				TextRender()->TextEx(&MeasureCursor, aPointBuf);
 			TextRender()->TextEx(&MeasureCursor, aClientId);
 			TextRender()->TextEx(&MeasureCursor, Line.m_aName);
 			if(Line.m_TimesRepeated > 0)
@@ -1158,6 +1167,13 @@ void CChat::OnPrepareLines(float y)
 			NameColor = GameClient()->GetDDTeamColor(GameClient()->m_Teams.Team(Line.m_ClientId), 0.75f);
 		else
 			NameColor = ColorRGBA(0.8f, 0.8f, 0.8f, 1.0f);
+
+		// RANBICLIENT m_RcChatShowPoints
+		if(ShowPoints)
+		{
+			TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &LineCursor, aPointBuf);
+		}
 
 		TextRender()->TextColor(NameColor);
 		TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &LineCursor, aClientId);

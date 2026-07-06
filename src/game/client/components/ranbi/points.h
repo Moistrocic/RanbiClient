@@ -21,6 +21,8 @@ class CPoints : public CComponent
 public:
 	int Sizeof() const override { return sizeof(*this); }
 	void OnRender() override;
+	void OnReset() override;
+	void ClearPoints();
 
 	void AddRequest(const std::string &Name, const std::shared_ptr<CHttpRequest> &Request);
 	void FinishRequest(const std::string &Name);

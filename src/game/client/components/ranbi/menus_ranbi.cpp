@@ -162,7 +162,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcScoreboardShowLove, RCLocalize("Scoreboard show love"), &g_Config.m_RcScoreboardShowLove, &Column, s_LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcScoreboardShowPoints, RCLocalize("Scoreboard show points"), &g_Config.m_RcScoreboardShowPoints, &Column, s_LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcScoreboardShowPoints, RCLocalize("Scoreboard show ddrace points"), &g_Config.m_RcScoreboardShowPoints, &Column, s_LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcScoreboardCopyName, RCLocalize("Scoreboard copy name"), &g_Config.m_RcScoreboardCopyName, &Column, s_LineSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
@@ -174,7 +174,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcChatSkipRepeatHistory, RCLocalize("Chat skip repeat history"), &g_Config.m_RcChatSkipRepeatHistory, &Column, s_LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcChatShowPoints, RCLocalize("Chat show points"), &g_Config.m_RcChatShowPoints, &Column, s_LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcChatShowPoints, RCLocalize("Chat show ddrace points"), &g_Config.m_RcChatShowPoints, &Column, s_LineSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	LeftView = Column;
@@ -187,7 +187,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Ui()->DoLabel(&Label, RCLocalize("Nameplates"), s_HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcNameplatesShowPoints, RCLocalize("Show points"), &g_Config.m_RcNameplatesShowPoints, &Column, s_LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcNameplatesShowPoints, RCLocalize("Show ddrace points"), &g_Config.m_RcNameplatesShowPoints, &Column, s_LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcNameplatesShowPositionX, RCLocalize("Show position X"), &g_Config.m_RcNameplatesShowPositionX, &Column, s_LineSize);
 
 	if(g_Config.m_RcNameplatesShowPositionX)

@@ -4,6 +4,13 @@
 
 #include <game/client/gameclient.h>
 
+#include <set>
+
+void CPoints::OnReset()
+{
+	ClearPoints();
+}
+
 void CPoints::OnRender()
 {
 	std::unique_lock<std::mutex> Lock(m_PointsRequestsMutex);
@@ -30,6 +37,21 @@ void CPoints::OnRender()
 	{
 		FinishRequest(Name);
 		RemovePoints(Name);
+	}
+
+	std::lock_guard<std::mutex> LockCache(m_PointsMutex);
+	std::set<std::string> NameSet;
+	for(const CNetObj_PlayerInfo *pInfo : GameClient()->m_Snap.m_apInfoByName)
+	{
+		if(pInfo)
+			NameSet.insert(GameClient()->m_aClients[pInfo->m_ClientId].m_aName);
+	}
+	for(auto It = m_PointsCache.begin(); It != m_PointsCache.end();)
+	{
+		if(!NameSet.contains(It->first))
+			It = m_PointsCache.erase(It);
+		else
+			++It;
 	}
 }
 
@@ -71,6 +93,12 @@ void CPoints::RemovePoints(const std::string &Name)
 	m_PointsCache.erase(Name);
 }
 
+void CPoints::ClearPoints()
+{
+	std::lock_guard<std::mutex> Lock(m_PointsMutex);
+	m_PointsCache.clear();
+}
+
 std::string CPoints::EncodePlayerName(const std::string &Name)
 {
 	std::string Encoded;
@@ -95,7 +123,7 @@ void CPoints::ParseJson(const json_value *pObj, const std::string &TargetName)
 {
 	if(!pObj || pObj->type != json_object)
 	{
-		RemovePoints(TargetName);
+		m_PointsCache.insert_or_assign(TargetName, 0);
 		return;
 	}
 
@@ -105,7 +133,7 @@ void CPoints::ParseJson(const json_value *pObj, const std::string &TargetName)
 
 	if(PlayerName->type == json_none || PlayerPoints->type == json_none)
 	{
-		RemovePoints(TargetName);
+		m_PointsCache.insert_or_assign(TargetName, 0);
 		return;
 	}
 

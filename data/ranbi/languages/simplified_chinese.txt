@@ -39,8 +39,8 @@ Scoreboard
 Scoreboard show love
 == 计分板显示爱心
 
-Scoreboard show points
-== 计分板显示分数
+Scoreboard show ddrace points
+== 计分板显示DDRace分数
 
 Scoreboard copy name
 == 计分板快捷复制其他玩家名称
@@ -51,14 +51,14 @@ Chat
 Chat skip repeat history
 == 聊天框跳过历史重复文本
 
-Chat show points
-== 聊天框显示分数
+Chat show ddrace points
+== 聊天框显示DDRace分数
 
 Nameplates
 == 铭牌
 
-Show points
-== 显示分数
+Show ddrace points
+== 显示DDRace分数
 
 Show position X
 == 显示X坐标

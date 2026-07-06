@@ -510,7 +510,11 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 		FontSize = 5.0f;
 	}
 
-	const float ScoreOffset = Scoreboard.x + 20.0f;
+	// RANBICLIENT m_RcScoreboardShowPoints
+	const float PointsOffset = Scoreboard.x + 20.0f;
+	const float PointsLength = g_Config.m_RcScoreboardShowPoints ? TextRender()->TextWidth(FontSize, "99999") + 10.0f : 0.0f;
+
+	const float ScoreOffset = PointsOffset + PointsLength;
 	const float ScoreLength = TextRender()->TextWidth(FontSize, UseTime ? "00:00:00" : "99999");
 	const float TeeOffset = ScoreOffset + ScoreLength + 20.0f;
 	const float TeeLength = 60.0f * TeeSizeMod;
@@ -528,6 +532,13 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 	CUIRect Headline;
 	Scoreboard.HSplitTop(HeadlineFontsize * 2.0f, &Headline, &Scoreboard);
 	const float HeadlineY = Headline.y + Headline.h / 2.0f - HeadlineFontsize / 2.0f;
+	// RANBICLIENT m_RcScoreboardShowPoints
+	if(g_Config.m_RcScoreboardShowPoints)
+	{
+		const char *pPoints = RCLocalize("Points");
+		TextRender()->Text(PointsOffset + PointsLength - 10.0f - TextRender()->TextWidth(HeadlineFontsize, pPoints), HeadlineY, HeadlineFontsize, pPoints);
+	}
+
 	const char *pScore = UseTime ? Localize("Time") : Localize("Score");
 	TextRender()->Text(ScoreOffset + ScoreLength - TextRender()->TextWidth(HeadlineFontsize, pScore), HeadlineY, HeadlineFontsize, pScore);
 	TextRender()->Text(NameOffset, HeadlineY, HeadlineFontsize, Localize("Name"));
@@ -670,6 +681,17 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 					(Ui()->IsPopupOpen(&m_ScoreboardPopupContext) && m_ScoreboardPopupContext.m_ClientId == pInfo->m_ClientId))
 				{
 					Row.Draw(ColorRGBA(0.7f, 0.7f, 0.7f, 0.7f), IGraphics::CORNER_ALL, RoundRadius);
+				}
+			}
+
+			// RANBICLIENT m_RcScoreboardShowPoints
+			if(g_Config.m_RcScoreboardShowPoints == 1)
+			{
+				int Points = GameClient()->m_Points.GetPoints(ClientData.m_aName);
+				if(Points != -1)
+				{
+					str_format(aBuf, sizeof(aBuf), "%d", std::clamp(Points, 0, 99999));
+					TextRender()->Text(PointsOffset + PointsLength - 10.0f - TextRender()->TextWidth(HeadlineFontsize, aBuf), Row.y + (Row.h - FontSize) / 2.0f, FontSize, aBuf);
 				}
 			}
 
@@ -897,8 +919,12 @@ void CScoreboard::OnRender()
 	const auto &aTeamSize = GameClient()->m_Snap.m_aTeamSize;
 	const int NumPlayers = Teams ? maximum(aTeamSize[TEAM_RED], aTeamSize[TEAM_BLUE]) : aTeamSize[TEAM_RED];
 
-	const float ScoreboardSmallWidth = 375.0f + 10.0f;
-	const float ScoreboardWidth = !Teams && NumPlayers <= 16 ? ScoreboardSmallWidth : 750.0f;
+	// RANBICLIENT m_RcScoreboardShowPoints
+	const float ScoreboardPointsSmallWidth = g_Config.m_RcScoreboardShowPoints ? 80.0f : 0.0f;
+	const float ScoreboardPointsWidth = g_Config.m_RcScoreboardShowPoints ? 150.0f : 0.0f;
+
+	const float ScoreboardSmallWidth = 375.0f + 10.0f + ScoreboardPointsSmallWidth;
+	const float ScoreboardWidth = !Teams && NumPlayers <= 16 ? ScoreboardSmallWidth : 750.0f + ScoreboardPointsWidth;
 	const float TitleHeight = 30.0f;
 
 	CUIRect Scoreboard = {(Screen.w - ScoreboardWidth) / 2.0f, 75.0f, ScoreboardWidth, 355.0f + TitleHeight};
