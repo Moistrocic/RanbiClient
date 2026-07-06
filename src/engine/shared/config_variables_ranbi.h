@@ -57,4 +57,3 @@ MACRO_CONFIG_STR(RcShowEnableSkipThreeTilesInfoPositionDJLeftText, rc_show_enabl
 MACRO_CONFIG_STR(RcShowEnableSkipThreeTilesInfoPositionDJRightText, rc_show_enable_skip_three_tiles_info_position_dj_right_text, 128, "↗", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcAutoChangeSkin, rc_auto_change_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcShowSpectatorSkin, rc_show_spectator_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
-MACRO_CONFIG_INT(RcSwitchRecentWeapon, rc_switch_recent_weapon, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")

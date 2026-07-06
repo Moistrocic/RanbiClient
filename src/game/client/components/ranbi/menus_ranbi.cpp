@@ -279,10 +279,14 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 	Ui()->DoLabel(&Label, RCLocalize("Weapon Settings"), s_HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcShowWeaponsAngle, RCLocalize("Show weapons angle"), &g_Config.m_RcShowWeaponsAngle, &Column, s_LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcSwitchRecentWeapon, RCLocalize("Switch recent weapon"), &g_Config.m_RcSwitchRecentWeapon, &Column, s_LineSize);
+	static CButtonContainer s_ReaderButtonSwitchRecentWeapon, s_ClearButtonSwitchRecentWeapon;
+	DoLine_KeyReader(Column, s_ReaderButtonSwitchRecentWeapon, s_ClearButtonSwitchRecentWeapon, RCLocalize("Switch recent weapon"), "+switch_recent_weapon");
 
-	Column.HSplitTop(s_Margin, nullptr, &Column);
+	Column.HSplitTop(s_MarginExtraSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcShowWeaponsAngle, RCLocalize("Show weapons angle"), &g_Config.m_RcShowWeaponsAngle, &Column, s_LineSize);
+
+	Column.HSplitTop(s_MarginExtraSmall, nullptr, &Column);
 
 	// Edit panel - uses independent s_EditWeapon, loaded from selected row on click
 	static SWeaponInfo s_EditWeapon;

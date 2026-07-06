@@ -62,6 +62,7 @@
 #include "components/ranbi/points.h"
 #include "components/ranbi/ranbi_client.h"
 #include "components/ranbi/render_proxy.h"
+#include "components/ranbi/weapons.h"
 #include "components/scoreboard.h"
 #include "components/skins.h"
 #include "components/skins7.h"
@@ -242,6 +243,7 @@ public:
 	CRanbiClient m_RanbiClient;
 	CRenderProxy m_RenderProxy;
 	CPoints m_Points;
+	CWeapons m_Weapons;
 
 private:
 	std::vector<class CComponent *>
