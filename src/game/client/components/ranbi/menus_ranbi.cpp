@@ -599,7 +599,7 @@ void CMenus::RenderRanbiInfo(CUIRect MainView)
 
 	static CButtonContainer s_GithubButton;
 	Column.HSplitTop(s_LineSize, &Button, &Column);
-	if(DoButton_Menu(&s_GithubButton, RCLocalize("GitHub"), 0, &Button))
+	if(DoButton_Menu(&s_GithubButton, "GitHub", 0, &Button))
 		Client()->ViewLink("https://github.com/Moistrocic/RanbiClient");
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 

@@ -12,9 +12,6 @@ Weapons Settings
 More DDNet
 == 更多DDNet选项
 
-General
-== 常规
-
 Hammer fix
 == 修复切分身非预期出锤
 
@@ -159,9 +156,6 @@ DJ left text
 DJ right text
 == 满足空中向右跳的文本
 
-No settings available.
-== 没有可用的设置。
-
 Ranbi Client
 == Ranbi 客户端
 
@@ -170,3 +164,69 @@ Based on TClient (TaterClient).
 
 Upstream: DDNet / Teeworlds.
 == 上游：DDNet / Teeworlds。
+
+Dummy
+== 分身
+
+Render
+== 渲染
+
+Spectator
+== 旁观
+
+Skip three tiles notify
+== 跳过三格水提示
+
+Fun
+== 娱乐
+
+Weapon Settings
+== 武器设置
+
+Weapon Edit
+== 武器编辑
+
+Hammer
+== 锤子
+
+Gun
+== 手枪
+
+Shotgun
+== 霰弹
+
+Grenade
+== 手榴弹
+
+Laser
+== 激光
+
+Ninja
+== 忍者
+
+Angle start
+== 起始角
+
+Angle end
+== 结束角
+
+Note
+== 备注
+
+Add
+== 添加
+
+Modify
+== 修改
+
+Delete
+== 删除
+
+Angle range
+== 角度范围
+
+DDNet fix
+== DDNet修复
+
+Links
+== 链接
