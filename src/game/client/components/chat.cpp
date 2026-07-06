@@ -491,12 +491,19 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			m_EditingNewLine = false;
 		}
 
+		// RANBICLIENT m_RcChatSkipRepeatHistory
 		if(m_pHistoryEntry)
 		{
-			CHistoryEntry *pTest = m_History.Prev(m_pHistoryEntry);
-
-			if(pTest)
-				m_pHistoryEntry = pTest;
+			char *CurText = m_pHistoryEntry->m_aText;
+			do
+			{
+				CHistoryEntry *pTest = m_History.Prev(m_pHistoryEntry);
+				if(pTest)
+					m_pHistoryEntry = pTest;
+				if(*CurText != *m_pHistoryEntry->m_aText)
+					break;
+				CurText = m_pHistoryEntry->m_aText;
+			} while(CurText != m_History.First()->m_aText && g_Config.m_RcChatSkipRepeatHistory);
 		}
 		else
 			m_pHistoryEntry = m_History.Last();
@@ -506,8 +513,19 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 	}
 	else if(Event.m_Flags & IInput::FLAG_PRESS && Event.m_Key == KEY_DOWN)
 	{
-		if(m_pHistoryEntry)
-			m_pHistoryEntry = m_History.Next(m_pHistoryEntry);
+		// RANBICLIENT m_RcChatSkipRepeatHistory
+		char *CurText = nullptr;
+		do
+		{
+			if(m_pHistoryEntry)
+			{
+				CurText = m_pHistoryEntry->m_aText;
+				m_pHistoryEntry = m_History.Next(m_pHistoryEntry);
+			}
+			if(!m_pHistoryEntry || *CurText != *m_pHistoryEntry->m_aText)
+				break;
+			CurText = m_pHistoryEntry->m_aText;
+		} while(CurText != m_History.Last()->m_aText && g_Config.m_RcChatSkipRepeatHistory);
 
 		if(m_pHistoryEntry)
 		{
