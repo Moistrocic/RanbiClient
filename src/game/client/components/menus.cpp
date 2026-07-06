@@ -541,6 +541,15 @@ void CMenus::RenderMenubar(CUIRect Box, IClient::EClientState ClientState)
 
 	Box.VSplitRight(10.0f, &Box, nullptr);
 	Box.VSplitRight(33.0f, &Box, &Button);
+	static CButtonContainer s_RanbiButton;
+	if(DoButton_MenuTab(&s_RanbiButton, "R", ActivePage == PAGE_RANBI, &Button, IGraphics::CORNER_T, &m_aAnimatorsSmallPage[SMALL_TAB_RANBI]))
+	{
+		NewPage = PAGE_RANBI;
+	}
+	GameClient()->m_Tooltips.DoToolTip(&s_RanbiButton, &Button, "Ranbi");
+
+	Box.VSplitRight(10.0f, &Box, nullptr);
+	Box.VSplitRight(33.0f, &Box, &Button);
 	static CButtonContainer s_EditorButton;
 	if(DoButton_MenuTab(&s_EditorButton, FontIcon::PEN_TO_SQUARE, 0, &Button, IGraphics::CORNER_T, &m_aAnimatorsSmallPage[SMALL_TAB_EDITOR]))
 	{
@@ -1126,6 +1135,10 @@ void CMenus::Render()
 			{
 				RenderSettings(MainView);
 			}
+			else if(m_MenuPage == PAGE_RANBI)
+			{
+				RenderRanbi(MainView);
+			}
 			else
 			{
 				dbg_assert_failed("Invalid m_MenuPage: %d", m_MenuPage);
@@ -1177,6 +1190,10 @@ void CMenus::Render()
 			else if(m_GamePage == PAGE_SETTINGS)
 			{
 				RenderSettings(MainView);
+			}
+			else if(m_GamePage == PAGE_RANBI)
+			{
+				RenderRanbi(MainView);
 			}
 			else
 			{

@@ -672,6 +672,7 @@ public:
 		PAGE_FAVORITE_COMMUNITY_5,
 		PAGE_DEMOS,
 		PAGE_SETTINGS,
+		PAGE_RANBI,
 		PAGE_NETWORK,
 		PAGE_GHOST,
 
@@ -719,6 +720,7 @@ public:
 		SMALL_TAB_QUIT,
 		SMALL_TAB_SETTINGS,
 		SMALL_TAB_EDITOR,
+		SMALL_TAB_RANBI,
 		SMALL_TAB_DEMOBUTTON,
 		SMALL_TAB_SERVER,
 		SMALL_TAB_BROWSER_FILTER,
@@ -853,6 +855,10 @@ private:
 	void RenderSettingsTClientStatusBar(CUIRect MainView);
 	void RenderSettingsTClientProfiles(CUIRect MainView);
 	void RenderSettingsTClientConfigs(CUIRect MainView);
+
+	// found in menus_ranbi.cpp
+	void RenderRanbi(CUIRect MainView);
+
 	void RenderTeeCute(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, bool CuteEyes, float Alpha = 1.0f);
 
 	const CWarType *m_pRemoveWarType = nullptr;
