@@ -21,7 +21,7 @@ static const float s_MarginSmall = 5.0f;
 static const float s_MarginBetweenSections = 30.0f;
 static const float s_MarginBetweenViews = 30.0f;
 
-void CMenus::RenderRanbiMain(CUIRect MainView)
+void CMenus::RenderRanbiSettings(CUIRect MainView)
 {
 	static CScrollRegion s_ScrollRegion;
 	vec2 ScrollOffset(0.0f, 0.0f);
@@ -112,7 +112,7 @@ void CMenus::RenderRanbi(CUIRect MainView)
 	const float TabWidth = TabBar.w / NUMBER_OF_RANBI_TABS;
 	static CButtonContainer s_aPageTabs[NUMBER_OF_RANBI_TABS] = {};
 	const char *apTabNames[] = {
-		RCLocalize("Ranbi Client"),
+		RCLocalize("Settings"),
 		RCLocalize("Info")};
 
 	for(int Tab = 0; Tab < NUMBER_OF_RANBI_TABS; ++Tab)
@@ -127,7 +127,7 @@ void CMenus::RenderRanbi(CUIRect MainView)
 	MainView.HSplitTop(s_Margin, nullptr, &MainView);
 
 	if(s_CurTab == RANBI_TAB_MAIN)
-		RenderRanbiMain(MainView);
+		RenderRanbiSettings(MainView);
 	else if(s_CurTab == RANBI_TAB_INFO)
 		RenderRanbiInfo(MainView);
 }
