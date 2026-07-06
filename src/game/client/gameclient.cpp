@@ -553,6 +553,11 @@ void CGameClient::OnDummySwap()
 	if(g_Config.m_RcHammerFix && g_Config.m_ClDummyCopyMoves)
 		m_DummyInput.m_Fire = PrevDummyFire;
 	m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = PrevDummyFire;
+
+	// RANBICLIENT m_RcCursorCopy
+	if(g_Config.m_RcCursorCopy)
+		m_Controls.m_aMousePos[g_Config.m_ClDummy] = m_Controls.m_aMousePos[!g_Config.m_ClDummy];
+
 	m_IsDummySwapping = 1;
 }
 
