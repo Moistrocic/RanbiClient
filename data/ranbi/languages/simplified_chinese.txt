@@ -19,7 +19,7 @@ Cursor copy
 == 切分身不改变准星位置
 
 Emotion deferred render
-== 表情之后渲染
+== 表情滞后渲染
 
 Hook coll deferred render
 == 钩子辅助线滞后渲染
