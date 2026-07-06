@@ -230,3 +230,6 @@ DDNet fix
 
 Links
 == 链接
+
+Points
+== 分数
