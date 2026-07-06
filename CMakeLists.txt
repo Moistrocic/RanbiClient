@@ -2594,6 +2594,8 @@ if(CLIENT)
     components/players.h
     components/race_demo.cpp
     components/race_demo.h
+    components/ranbi/ranbi_client.cpp
+    components/ranbi/ranbi_client.h
     components/scoreboard.cpp
     components/scoreboard.h
     components/skins.cpp

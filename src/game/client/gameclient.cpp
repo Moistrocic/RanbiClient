@@ -116,7 +116,8 @@ void CGameClient::OnConsoleInit()
 	m_pMap = CreateMap();
 
 	// make a list of all the systems, make sure to add them in the correct render order
-	m_vpAll.insert(m_vpAll.end(), {&m_Skins,
+	m_vpAll.insert(m_vpAll.end(), {&m_RanbiClient,
+					      &m_Skins,
 					      &m_Skins7,
 					      &m_CountryFlags,
 					      &m_MapImages,
@@ -144,10 +145,10 @@ void CGameClient::OnConsoleInit()
 					      &m_Ghost,
 					      &m_TClient, // TClient (Must be before chat and players)
 					      &m_Players,
-						  &m_MovingTilesBackground, // TClient
-						  &m_MapLayersForeground,
-						  &m_MovingTilesForeground, // TClient
-					      &m_Outlines,  // TClient
+					      &m_MovingTilesBackground, // TClient
+					      &m_MapLayersForeground,
+					      &m_MovingTilesForeground, // TClient
+					      &m_Outlines, // TClient
 					      &m_Mumble, // TClient
 					      &m_Pet, // TClient
 					      &m_Particles.m_RenderExplosions,
