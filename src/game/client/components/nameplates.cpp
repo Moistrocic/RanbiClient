@@ -52,19 +52,19 @@ public:
 	int m_HookStrongWeakId;
 	float m_FontSizeHookStrongWeak;
 
-	bool m_ShowPoints;
-	int m_Points;
+	bool m_ShowPoints = false;
+	int m_Points = -1;
 
-	bool m_ShowXPosition;
-	float m_XPosition;
+	bool m_ShowXPosition = false;
+	float m_XPosition = 0.0f;
 
-	bool m_ShowFinished;
+	bool m_ShowFinished = false;
 
-	bool m_ShowDummyCopyStatus;
+	bool m_ShowDummyCopyStatus = false;
 
-	bool m_ShowHammerFlyStatus;
+	bool m_ShowHammerFlyStatus = false;
 
-	bool m_ShowDummyResetStatus;
+	bool m_ShowDummyResetStatus = false;
 };
 
 // Part Types
