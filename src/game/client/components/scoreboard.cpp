@@ -516,7 +516,12 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 
 	const float ScoreOffset = PointsOffset + PointsLength;
 	const float ScoreLength = TextRender()->TextWidth(FontSize, UseTime ? "00:00:00" : "99999");
-	const float TeeOffset = ScoreOffset + ScoreLength + 20.0f;
+
+	// RANBICLIENT m_RcScoreboardShowLove
+	const float FriendOffset = ScoreOffset + ScoreLength + 20.0f;
+	const float FriendLength = g_Config.m_RcScoreboardShowLove ? 20.0f : 0.0f;
+
+	const float TeeOffset = FriendOffset + FriendLength;
 	const float TeeLength = 60.0f * TeeSizeMod;
 	const float NameOffset = TeeOffset + TeeLength;
 	const float NameLength = (LowScoreboardWidth ? 90.0f : 150.0f) - TeeLength;
@@ -718,6 +723,14 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 			{
 				str_format(aBuf, sizeof(aBuf), "%d", std::clamp(pInfo->m_Score, -999, 99999));
 				TextRender()->Text(ScoreOffset + ScoreLength - TextRender()->TextWidth(FontSize, aBuf), ScorePosition.y + (Row.h - FontSize) / 2.0f, FontSize, aBuf);
+			}
+
+			// RANBICLIENT m_RcScoreboardShowLove
+			if(g_Config.m_RcScoreboardShowLove && GameClient()->m_aClients[pInfo->m_ClientId].m_Friend)
+			{
+				TextRender()->TextColor(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageFriendColor)));
+				TextRender()->Text(FriendOffset, Row.y + (Row.h - FontSize) / 2.0f, FontSize, "♥");
+				TextRender()->TextColor(TextRender()->DefaultTextColor());
 			}
 
 			// CTF flag
