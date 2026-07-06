@@ -1647,6 +1647,8 @@ set(EXPECTED_DATA
   menuimages/settings.png
   particles.png
   race_flag.png
+  ranbi/languages/index.txt
+  ranbi/languages/simplified_chinese.txt
   shader/pipeline.frag
   shader/pipeline.vert
   shader/prim.frag
@@ -1959,8 +1961,6 @@ set(EXPECTED_DATA
   tclient/languages/traditional_chinese.txt
   tclient/languages/turkish.txt
   tclient/languages/ukrainian.txt
-  ranbi/languages/index.txt
-  ranbi/languages/simplified_chinese.txt
   themes/auto.png
   themes/autumn.png
   themes/autumn_day.map
@@ -2228,6 +2228,7 @@ set_src(ENGINE_SHARED GLOB_RECURSE src/engine/shared
   config_domains.h
   config_includes.h
   config_variables.h
+  config_variables_ranbi.h
   config_variables_tclient.h
   console.cpp
   console.h
