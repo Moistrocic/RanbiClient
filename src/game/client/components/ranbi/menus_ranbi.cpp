@@ -60,6 +60,18 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	s_ScrollRegion.End();
 }
 
+void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
+{
+}
+
+void CMenus::RenderRanbiDDNetMore(CUIRect MainView)
+{
+}
+
+void CMenus::RenderRanbiTClientMore(CUIRect MainView)
+{
+}
+
 void CMenus::RenderRanbiInfo(CUIRect MainView)
 {
 	static CScrollRegion s_ScrollRegion;
@@ -113,6 +125,9 @@ void CMenus::RenderRanbi(CUIRect MainView)
 	static CButtonContainer s_aPageTabs[NUMBER_OF_RANBI_TABS] = {};
 	const char *apTabNames[] = {
 		RCLocalize("Settings"),
+		RCLocalize("Weapons Settings"),
+		RCLocalize("More DDNet"),
+		RCLocalize("More TClient"),
 		RCLocalize("Info")};
 
 	for(int Tab = 0; Tab < NUMBER_OF_RANBI_TABS; ++Tab)
