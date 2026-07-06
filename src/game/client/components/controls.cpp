@@ -310,6 +310,10 @@ int CControls::SnapInput(int *pData)
 			}
 
 			m_aInputData[!g_Config.m_ClDummy] = *pDummyInput;
+
+			// RANBICLIENT m_RcHammerFix
+			if(g_Config.m_RcHammerFix && g_Config.m_ClDummyCopyMoves == 1)
+				m_aLastData[!g_Config.m_ClDummy] = *pDummyInput;
 		}
 
 		if(g_Config.m_ClDummyControl)
