@@ -11,3 +11,162 @@ Weapons Settings
 
 More DDNet
 == 更多DDNet选项
+
+General
+== 常规
+
+Hammer fix
+== 修复切分身非预期出锤
+
+Cursor copy
+== 切分身不改变准星位置
+
+Emotion deferred render
+== 表情之后渲染
+
+Hook coll deferred render
+== 钩子辅助线滞后渲染
+
+Talking hidden
+== 静默聊天
+
+Auto change skin
+== 碰撞换肤
+
+Show spectator skin
+== 旁观模式显示旁观玩家的皮肤名称
+
+Scoreboard
+== 计分板
+
+Scoreboard show love
+== 计分板显示爱心
+
+Scoreboard show points
+== 计分板显示分数
+
+Scoreboard copy name
+== 计分板快捷复制其他玩家名称
+
+Chat
+== 聊天
+
+Chat skip repeat history
+== 聊天框跳过历史重复文本
+
+Chat show points
+== 聊天框显示分数
+
+Nameplates
+== 铭牌
+
+Show points
+== 显示分数
+
+Show position X
+== 显示X坐标
+
+Show position X matched
+== X坐标匹配时更换颜色
+
+Position X matched color
+== X坐标匹配时的颜色
+
+Show finished
+== 显示是否完成地图
+
+Finished size
+== 完成地图图标尺寸
+
+Show dummy copy status
+== 显示是否开启分身同步
+
+Dummy copy status size
+== 分身同步图标尺寸
+
+Show hammer fly status
+== 显示是否开启分身锤
+
+Hammer fly status size
+== 分身锤图标尺寸
+
+Show dummy reset status
+== 显示是否开启卡键
+
+Dummy reset status size
+== 卡键图标尺寸
+
+Range hidden
+== 隐藏范围内玩家的铭牌
+
+Range hidden name
+== 隐藏铭牌名字
+
+Range hidden points
+== 隐藏铭牌分数
+
+Range hidden position X
+== 隐藏铭牌X坐标
+
+Range hidden finished
+== 隐藏完成地图图标
+
+Range hidden status
+== 隐藏各种状态
+
+Range hidden hook status
+== 隐藏强弱钩
+
+Range hidden love
+== 隐藏爱心
+
+Range hidden others
+== 隐藏其他
+
+Weapon
+== 武器
+
+Show weapons angle
+== 显示武器标记的角度
+
+Switch recent weapon
+== 切换最近的武器
+
+Enable skip three tiles notify
+== 显示当前坐标是否满足跳过3格水
+
+Size
+== 尺寸
+
+Color
+== 颜色
+
+Position X
+== 水平位置
+
+Position Y
+== 垂直位置
+
+Left text
+== 向左跳的文本
+
+Right text
+== 向右跳的文本
+
+DJ left text
+== 满足空中向左跳的文本
+
+DJ right text
+== 满足空中向右跳的文本
+
+No settings available.
+== 没有可用的设置。
+
+Ranbi Client
+== Ranbi 客户端
+
+Based on TClient (TaterClient).
+== 基于 TClient（TaterClient） 开发。
+
+Upstream: DDNet / Teeworlds.
+== 上游：DDNet / Teeworlds。
