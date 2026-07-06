@@ -12,13 +12,13 @@ static constexpr int RANBI_TAB_MAIN = 0;
 static constexpr int RANBI_TAB_INFO = 1;
 static constexpr int NUMBER_OF_RANBI_TABS = 2;
 
-static const float s_FontSize = 14.0f;
+// static const float s_FontSize = 14.0f;
 static const float s_LineSize = 20.0f;
-static const float s_HeadlineFontSize = 20.0f;
-static const float s_HeadlineHeight = s_HeadlineFontSize + 0.0f;
+// static const float s_HeadlineFontSize = 20.0f;
+// static const float s_HeadlineHeight = s_HeadlineFontSize + 0.0f;
 static const float s_Margin = 10.0f;
 static const float s_MarginSmall = 5.0f;
-static const float s_MarginBetweenSections = 30.0f;
+// static const float s_MarginBetweenSections = 30.0f;
 static const float s_MarginBetweenViews = 30.0f;
 
 void CMenus::RenderRanbiSettings(CUIRect MainView)
