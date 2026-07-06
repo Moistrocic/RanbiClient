@@ -696,7 +696,7 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 				if(Points != -1)
 				{
 					str_format(aBuf, sizeof(aBuf), "%d", std::clamp(Points, 0, 99999));
-					TextRender()->Text(PointsOffset + PointsLength - 10.0f - TextRender()->TextWidth(HeadlineFontsize, aBuf), Row.y + (Row.h - FontSize) / 2.0f, FontSize, aBuf);
+					TextRender()->Text(PointsOffset + PointsLength - 10.0f - TextRender()->TextWidth(FontSize, aBuf), Row.y + (Row.h - FontSize) / 2.0f, FontSize, aBuf);
 				}
 			}
 
