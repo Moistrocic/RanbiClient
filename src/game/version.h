@@ -23,8 +23,13 @@ extern const char *GIT_SHORTREV_HASH;
 #define TCLIENT_VERSION "10.8.7"
 #endif
 
+// Ranbi
+#ifndef RANBI_VERSION
+#define RANBI_VERSION "1.0.0"
+#endif
+
 // custom
-#define CLIENT_NAME "TClient"
-#define CLIENT_RELEASE_VERSION TCLIENT_VERSION
+#define CLIENT_NAME "RANBI"
+#define CLIENT_RELEASE_VERSION RANBI_VERSION
 
 #endif
