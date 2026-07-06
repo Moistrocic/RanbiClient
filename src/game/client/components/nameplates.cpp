@@ -51,6 +51,20 @@ public:
 	bool m_ShowHookStrongWeakId;
 	int m_HookStrongWeakId;
 	float m_FontSizeHookStrongWeak;
+
+	bool m_ShowPoints;
+	int m_Points;
+
+	bool m_ShowXPosition;
+	float m_XPosition;
+
+	bool m_ShowFinished;
+
+	bool m_ShowDummyCopyStatus;
+
+	bool m_ShowHammerFlyStatus;
+
+	bool m_ShowDummyResetStatus;
 };
 
 // Part Types
@@ -686,6 +700,142 @@ public:
 		CNamePlatePartText(This) {}
 };
 
+class CNamePlatePartPoints : public CNamePlatePartText
+{
+private:
+	char m_aText[64];
+	int m_Points = -1;
+	float m_FontSize = -INFINITY;
+
+protected:
+	bool UpdateNeeded(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = Data.m_ShowPoints;
+		if(!m_Visible)
+			return false;
+		m_Color = Data.m_Color;
+		return m_FontSize != Data.m_FontSize || m_Points != Data.m_Points;
+	}
+	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Points = Data.m_Points;
+		str_format(m_aText, sizeof(m_aText), "[%d]", m_Points);
+		m_FontSize = Data.m_FontSize;
+		CTextCursor Cursor;
+		Cursor.m_FontSize = m_FontSize;
+		if(m_Points != -1)
+			This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, m_aText);
+	}
+
+public:
+	CNamePlatePartPoints(CGameClient &This) : CNamePlatePartText(This) {}
+};
+
+class CNamePlatePartXPosition : public CNamePlatePartText
+{
+private:
+	char m_aText[64];
+	float m_XPosition = 0.0f;
+	float m_FontSize = -INFINITY;
+
+protected:
+	bool UpdateNeeded(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = Data.m_ShowXPosition;
+		if(!m_Visible)
+			return false;
+		m_Color = Data.m_Color;
+		return m_FontSize != Data.m_FontSize || m_XPosition != Data.m_XPosition;
+	}
+	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_XPosition = Data.m_XPosition;
+		str_format(m_aText, sizeof(m_aText), "%.2f", m_XPosition);
+		m_FontSize = Data.m_FontSize;
+		CTextCursor Cursor;
+		Cursor.m_FontSize = m_FontSize;
+		This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, m_aText);
+	}
+
+public:
+	CNamePlatePartXPosition(CGameClient &This) : CNamePlatePartText(This) {}
+};
+
+class CNamePlatePartRaceState : public CNamePlatePartIcon
+{
+public:
+	void Update(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = Data.m_ShowFinished;
+		if(!m_Visible)
+			return;
+		float Width = g_Config.m_RcNameplatesShowFinishedSize;
+		m_Size = vec2(Width, Width);
+	}
+	CNamePlatePartRaceState(CGameClient &This) : CNamePlatePartIcon(This)
+	{
+		m_Texture = g_pData->m_aImages[IMAGE_RACEFLAG].m_Id;
+	}
+};
+
+class CNamePlatePartDummyCopyState : public CNamePlatePartIcon
+{
+public:
+	void Update(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = Data.m_ShowDummyCopyStatus;
+		if(!m_Visible)
+			return;
+		float Width = g_Config.m_RcNameplatesShowDummyCopyStatusSize;
+		m_Size = vec2(Width, Width);
+	}
+	CNamePlatePartDummyCopyState(CGameClient &This) : CNamePlatePartIcon(This)
+	{
+		m_Texture = This.m_HudSkin.m_SpriteHudDummyCopy;
+	}
+};
+
+class CNamePlatePartHammerFlyStatus : public CNamePlatePartIcon
+{
+public:
+	void Update(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = Data.m_ShowHammerFlyStatus;
+		if(!m_Visible)
+			return;
+		float Width = g_Config.m_RcNameplatesShowHammerFlyStatusSize;
+		m_Size = vec2(Width, Width);
+	}
+	CNamePlatePartHammerFlyStatus(CGameClient &This) : CNamePlatePartIcon(This)
+	{
+		m_Texture = This.m_HudSkin.m_SpriteHudDummyHammer;
+	}
+};
+
+class CNamePlatePartDummyResetStatus : public CNamePlatePartText
+{
+private:
+	float m_FontSize = -INFINITY;
+
+public:
+	bool UpdateNeeded(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = Data.m_ShowDummyResetStatus;
+		if(!m_Visible)
+			return false;
+		m_Color = ColorRGBA(1.0f, 0.0f, 0.0f, Data.m_Color.a);
+		return m_FontSize != g_Config.m_RcNameplatesShowDummyResetStatusSize;
+	}
+	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_FontSize = g_Config.m_RcNameplatesShowDummyResetStatusSize;
+		CTextCursor Cursor;
+		Cursor.m_FontSize = m_FontSize;
+		This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, "↺");
+	}
+	CNamePlatePartDummyResetStatus(CGameClient &This) : CNamePlatePartText(This) {}
+};
+
 // ***** Name Plates *****
 
 class CNamePlate
@@ -728,6 +878,7 @@ private:
 		AddPart<CNamePlatePartIgnoreMark>(This); // TClient
 		AddPart<CNamePlatePartFriendMark>(This);
 		AddPart<CNamePlatePartClientId>(This, false);
+		AddPart<CNamePlatePartPoints>(This); // RANBICLIENT
 		AddPart<CNamePlatePartName>(This);
 		AddPart<CNamePlatePartNewLine>(This);
 
@@ -740,11 +891,18 @@ private:
 		AddPart<CNamePlatePartNewLine>(This); // TClient
 
 		AddPart<CNamePlatePartClientId>(This, true);
-		AddPart<CNamePlatePartNewLine>(This);
-
 		AddPart<CNamePlatePartHookStrongWeak>(This);
 		AddPart<CNamePlatePartHookStrongWeakId>(This);
 		AddPart<CNamePlatePartNewLine>(This);
+
+		AddPart<CNamePlatePartXPosition>(This); // RANBICLIENT
+		AddPart<CNamePlatePartNewLine>(This); // RANBICLIENT
+
+		AddPart<CNamePlatePartRaceState>(This); // RANBICLIENT
+		AddPart<CNamePlatePartDummyResetStatus>(This); // RANBICLIENT
+		AddPart<CNamePlatePartHammerFlyStatus>(This); // RANBICLIENT
+		AddPart<CNamePlatePartDummyCopyState>(This); // RANBICLIENT
+		AddPart<CNamePlatePartNewLine>(This); // RANBICLIENT
 
 		AddPart<CNamePlatePartDirection>(This, DIRECTION_LEFT);
 		AddPart<CNamePlatePartDirection>(This, DIRECTION_UP);
@@ -984,6 +1142,30 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 		Data.m_ShowClan = true;
 	Data.m_Local = pPlayerInfo->m_Local;
 
+	// RANBICLIENT custom nameplate data
+	bool IsPlayer = pPlayerInfo->m_ClientId == GameClient()->m_aLocalIds[!g_Config.m_ClDummy] || pPlayerInfo->m_ClientId == GameClient()->m_aLocalIds[g_Config.m_ClDummy];
+
+	// RANBICLIENT m_RcNameplatesShowPoints
+	Data.m_ShowPoints = Data.m_ShowName && g_Config.m_RcNameplatesShowPoints;
+	Data.m_Points = -1;
+
+	// RANBICLIENT m_RcNameplatesShowPositionX
+	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX;
+	if(Data.m_ShowXPosition)
+		Data.m_XPosition = GameClient()->m_aClients[pPlayerInfo->m_ClientId].m_Predicted.m_Pos.x / 32.0f;
+
+	// RANBICLIENT m_RcNameplatesShowFinished
+	Data.m_ShowFinished = g_Config.m_RcNameplatesShowFinished;
+
+	// RANBICLIENT m_RcNameplatesShowDummyCopyStatus
+	Data.m_ShowDummyCopyStatus = IsPlayer && g_Config.m_ClDummyCopyMoves && g_Config.m_RcNameplatesShowDummyCopyStatus;
+
+	const char *Mouse1Bind = GameClient()->m_Binds.Get(KEY_MOUSE_1, KeyModifier::NONE);
+	Data.m_ShowHammerFlyStatus = IsPlayer && g_Config.m_RcNameplatesShowHammerFlyStatus && (g_Config.m_ClDummyHammer || strstr(Mouse1Bind, "cl_dummy_hammer") != nullptr);
+
+	// RANBICLIENT m_RcNameplatesShowDummyResetStatus
+	Data.m_ShowDummyResetStatus = IsPlayer && !g_Config.m_ClDummyResetOnSwitch && g_Config.m_RcNameplatesShowDummyResetStatus;
+
 	// Check if the nameplate is actually on screen
 	CNamePlate &NamePlate = m_pData->m_aNamePlates[pPlayerInfo->m_ClientId];
 	NamePlate.Update(*GameClient(), Data);
@@ -1058,6 +1240,28 @@ void CNamePlates::RenderNamePlatePreview(vec2 Position, int Dummy)
 		TeeRenderInfo.ApplyColors(g_Config.m_ClDummyUseCustomColor, g_Config.m_ClDummyColorBody, g_Config.m_ClDummyColorFeet);
 	}
 	TeeRenderInfo.m_Size = 64.0f;
+
+	// RANBICLIENT custom nameplate data (preview)
+	// RANBICLIENT m_RcNameplatesShowPoints
+	Data.m_ShowPoints = Data.m_ShowName && g_Config.m_RcNameplatesShowPoints;
+	Data.m_Points = -1;
+
+	// RANBICLIENT m_RcNameplatesShowPositionX
+	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX;
+	if(Data.m_ShowXPosition)
+		Data.m_XPosition = 128.0f;
+
+	// RANBICLIENT m_RcNameplatesShowFinished
+	Data.m_ShowFinished = g_Config.m_RcNameplatesShowFinished;
+
+	// RANBICLIENT m_RcNameplatesShowDummyCopyStatus
+	Data.m_ShowDummyCopyStatus = g_Config.m_RcNameplatesShowDummyCopyStatus;
+
+	// RANBICLIENT m_RcNameplatesShowHammerFlyStatus
+	Data.m_ShowHammerFlyStatus = g_Config.m_RcNameplatesShowHammerFlyStatus;
+
+	// RANBICLIENT m_RcNameplatesShowDummyResetStatus
+	Data.m_ShowDummyResetStatus = g_Config.m_RcNameplatesShowDummyResetStatus;
 
 	CNamePlate NamePlate(*GameClient(), Data);
 	Position.y += NamePlate.Size().y / 2.0f;

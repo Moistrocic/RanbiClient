@@ -53,12 +53,12 @@ RanbiClient 在 TClient 基础上进行的定制修改，勾选表示已完成:
 
 **Nameplates 修改**：
 
-- [ ] Nameplates 显示玩家的分数
-- [ ] Nameplates 显示x坐标
-- [ ] Nameplates 显示是否完成该地图
-- [ ] Nameplates 显示是否开启Dummy Copy
-- [ ] Nameplates 显示是否开启Hammer Fly
-- [ ] Nameplates 显示是否开启卡键（Dummy Reset On Switch）
+- [x] Nameplates 显示玩家的分数
+- [x] Nameplates 显示x坐标
+- [x] Nameplates 显示是否完成该地图
+- [x] Nameplates 显示是否开启Dummy Copy
+- [x] Nameplates 显示是否开启Hammer Fly
+- [x] Nameplates 显示是否开启卡键（Dummy Reset On Switch）
 - [ ] 指定半径以及角度范围内的玩家隐藏其 Nameplates
 
 **聊天框修改**：
