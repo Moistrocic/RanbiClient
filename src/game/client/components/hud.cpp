@@ -1869,7 +1869,7 @@ void CHud::RenderSpectatorHud()
 	// TClient
 	float AdjustedHeight = m_Height - (g_Config.m_TcStatusBar ? g_Config.m_TcStatusBarHeight : 0.0f);
 	// draw the box
-	Graphics()->DrawRect(m_Width - 180.0f, AdjustedHeight - 15.0f, 180.0f, 15.0f, ColorRGBA(0.0f, 0.0f, 0.0f, 0.4f), IGraphics::CORNER_TL, 5.0f);
+	Graphics()->DrawRect(m_Width - 180.0f - 100.0f, AdjustedHeight - 15.0f, 180.0f + 100.0f, 15.0f, ColorRGBA(0.0f, 0.0f, 0.0f, 0.4f), IGraphics::CORNER_TL, 5.0f);
 
 	// draw the text
 	char aBuf[128];
@@ -1884,12 +1884,21 @@ void CHud::RenderSpectatorHud()
 			str_format(aBuf, sizeof(aBuf), Localize("Following %d: %s", "Spectating"), Player.ClientId(), Player.m_aName);
 		else
 			str_format(aBuf, sizeof(aBuf), Localize("Following %s", "Spectating"), Player.m_aName);
+
+		// RANBICLIENT m_RcShowSpectatorSkin
+		if(g_Config.m_RcShowSpectatorSkin)
+		{
+			char aSkin[128];
+			str_format(aSkin, sizeof(aSkin), RCLocalize("Skin %s"), Player.m_aSkinName);
+			str_append(aBuf, " | ", sizeof(aBuf));
+			str_append(aBuf, aSkin, sizeof(aBuf));
+		}
 	}
 	else
 	{
 		str_copy(aBuf, Localize("Free-View"));
 	}
-	TextRender()->Text(m_Width - 174.0f, AdjustedHeight - 15.0f + (15.f - 8.f) / 2.f, 8.0f, aBuf, -1.0f);
+	TextRender()->Text(m_Width - 174.0f - 100.0f, AdjustedHeight - 15.0f + (15.f - 8.f) / 2.f, 8.0f, aBuf, -1.0f);
 
 	// draw the camera info
 	if(Client()->State() != IClient::STATE_DEMOPLAYBACK && GameClient()->m_Camera.SpectatingPlayer() && GameClient()->m_Camera.CanUseAutoSpecCamera() && g_Config.m_ClSpecAutoSync)
@@ -2046,6 +2055,69 @@ void CHud::OnRender()
 		if(g_Config.m_ClShowRecord)
 			RenderRecord();
 	}
+	// RANBICLIENT m_RcShowEnableSkipThreeTiles
+	if(g_Config.m_RcShowEnableSkipThreeTiles && !GameClient()->m_Snap.m_SpecInfo.m_Active)
+	{
+		int PlayerId = GameClient()->m_Snap.m_LocalClientId;
+		vec2 PlayerPos = GameClient()->m_aClients[PlayerId].m_RenderPos / 32.0f;
+		double IntPart;
+		float FracX = modf(PlayerPos.x, &IntPart);
+
+		auto CheckPos = [](float Pos) -> int {
+			const float MaxDiff = 0.01f;
+			if(abs(Pos - 0.31f) <= MaxDiff || abs(Pos - 0.34f) <= MaxDiff || abs(Pos - 0.16f) <= MaxDiff)
+				return 1;
+			if(abs(Pos - 0.63f) <= MaxDiff || abs(Pos - 0.66f) <= MaxDiff || abs(Pos - 0.81f) <= MaxDiff)
+				return 2;
+			if(abs(Pos - 0.25f) <= MaxDiff || abs(Pos - 0.28f) <= MaxDiff || abs(Pos - 0.12f) <= MaxDiff || abs(Pos - 0.41f) <= MaxDiff)
+				return 3;
+			if(abs(Pos - 0.69f) <= MaxDiff || abs(Pos - 0.72f) <= MaxDiff || abs(Pos - 0.84f) <= MaxDiff || abs(Pos - 0.56f) <= MaxDiff)
+				return 4;
+			return 0;
+		};
+		int Mode = CheckPos(FracX);
+
+		if(Mode != 0)
+		{
+			const auto *pLayer = GameClient()->Layers()->GameLayer();
+			if(pLayer)
+			{
+				const auto *pTiles = (CTile *)GameClient()->Layers()->Map()->GetData(pLayer->m_Data);
+				if(pTiles)
+				{
+					const int Index = (int)PlayerPos.y * pLayer->m_Width + (int)PlayerPos.x;
+					if(Index > 0 && Index + 1 < pLayer->m_Height * pLayer->m_Width)
+					{
+						const auto Tile = pTiles[Index].m_Index;
+						const auto LeftTile = pTiles[Index - 1].m_Index;
+						const auto RightTile = pTiles[Index + 1].m_Index;
+						if(Tile != TILE_FREEZE && (LeftTile == TILE_FREEZE || RightTile == TILE_FREEZE))
+						{
+							const char *Text = "";
+							switch(Mode)
+							{
+							case 1: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionLeftText; break;
+							case 2: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionRightText; break;
+							case 3: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionDJLeftText; break;
+							case 4: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionDJRightText; break;
+							}
+							if((LeftTile == TILE_FREEZE && Mode & 1) || (RightTile == TILE_FREEZE && !(Mode & 1)))
+							{
+								float FontSize = g_Config.m_RcShowEnableSkipThreeTilesInfoSize;
+								float XPos = std::clamp((g_Config.m_RcShowEnableSkipThreeTilesInfoPositionX / 100.0f) * m_Width, 1.0f, m_Width - FontSize);
+								float YPos = std::clamp((g_Config.m_RcShowEnableSkipThreeTilesInfoPositionY / 100.0f) * m_Height, 1.0f, m_Height - FontSize);
+								ColorRGBA Color = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcShowEnableSkipThreeTilesInfoColor));
+								TextRender()->TextColor(Color);
+								TextRender()->Text(XPos, YPos, FontSize, Text, -1.0f);
+								TextRender()->TextColor(TextRender()->DefaultTextColor());
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	RenderCursor();
 }
 
