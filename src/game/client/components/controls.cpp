@@ -184,7 +184,8 @@ void CControls::OnMessage(int Msg, void *pRawMsg)
 int CControls::SnapInput(int *pData)
 {
 	// update player state
-	if(GameClient()->m_Chat.IsActive())
+	// RANBICLIENT m_RcTalkingHidden
+	if(GameClient()->m_Chat.IsActive() && !g_Config.m_RcTalkingHidden)
 		m_aInputData[g_Config.m_ClDummy].m_PlayerFlags = PLAYERFLAG_CHATTING;
 	else if(GameClient()->m_Menus.IsActive())
 		m_aInputData[g_Config.m_ClDummy].m_PlayerFlags = PLAYERFLAG_IN_MENU;
