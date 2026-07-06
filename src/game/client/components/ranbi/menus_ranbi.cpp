@@ -8,9 +8,11 @@
 
 #include <vector>
 
-static constexpr int RANBI_TAB_MAIN = 0;
-static constexpr int RANBI_TAB_INFO = 1;
-static constexpr int NUMBER_OF_RANBI_TABS = 2;
+static constexpr int RANBI_TAB_SETTINGS = 0;
+static constexpr int RANBI_TAB_WEAPONS_SETTINGS = 1;
+static constexpr int RANBI_TAB_DDNET_MORE = 2;
+static constexpr int RANBI_TAB_INFO = 3;
+static constexpr int NUMBER_OF_RANBI_TABS = 4;
 
 // static const float s_FontSize = 14.0f;
 static const float s_LineSize = 20.0f;
@@ -136,8 +138,12 @@ void CMenus::RenderRanbi(CUIRect MainView)
 
 	MainView.HSplitTop(s_Margin, nullptr, &MainView);
 
-	if(s_CurTab == RANBI_TAB_MAIN)
+	if(s_CurTab == RANBI_TAB_SETTINGS)
 		RenderRanbiSettings(MainView);
+	else if(s_CurTab == RANBI_TAB_WEAPONS_SETTINGS)
+		RenderRanbiWeaponsSettings(MainView);
+	else if(s_CurTab == RANBI_TAB_DDNET_MORE)
+		RenderRanbiDDNetMore(MainView);
 	else if(s_CurTab == RANBI_TAB_INFO)
 		RenderRanbiInfo(MainView);
 }
