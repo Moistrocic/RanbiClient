@@ -1959,6 +1959,8 @@ set(EXPECTED_DATA
   tclient/languages/traditional_chinese.txt
   tclient/languages/turkish.txt
   tclient/languages/ukrainian.txt
+  ranbi/languages/index.txt
+  ranbi/languages/simplified_chinese.txt
   themes/auto.png
   themes/autumn.png
   themes/autumn_day.map

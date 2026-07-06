@@ -858,6 +858,8 @@ private:
 
 	// found in menus_ranbi.cpp
 	void RenderRanbi(CUIRect MainView);
+	void RenderRanbiMain(CUIRect MainView);
+	void RenderRanbiInfo(CUIRect MainView);
 
 	void RenderTeeCute(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, bool CuteEyes, float Alpha = 1.0f);
 

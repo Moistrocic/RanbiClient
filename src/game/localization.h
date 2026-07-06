@@ -64,4 +64,7 @@ extern CLocalizationDatabase g_Localization;
 
 [[gnu::format_arg(1)]] extern const char *TCLocalize(const char *pStr, const char *pContext = "");
 
+// Ranbi
+[[gnu::format_arg(1)]] extern const char *RCLocalize(const char *pStr, const char *pContext = "");
+
 #endif

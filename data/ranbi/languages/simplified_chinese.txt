@@ -1,0 +1,7 @@
+##### translated strings #####
+
+Ranbi Client
+== Ranbi客户端
+
+Info
+== 信息

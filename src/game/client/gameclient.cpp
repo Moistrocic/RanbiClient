@@ -323,6 +323,10 @@ void CGameClient::InitializeLanguage()
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf), "tclient/%s", g_Config.m_ClLanguagefile);
 	g_Localization.Load(aBuf, Storage(), Console(), false);
+
+	// Ranbi
+	str_format(aBuf, sizeof(aBuf), "ranbi/%s", g_Config.m_ClLanguagefile);
+	g_Localization.Load(aBuf, Storage(), Console(), false);
 }
 
 void CGameClient::ForceUpdateConsoleRemoteCompletionSuggestions()
@@ -1359,6 +1363,10 @@ void CGameClient::HandleLanguageChanged()
 	// TClient
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf), "tclient/%s", g_Config.m_ClLanguagefile);
+	g_Localization.Load(aBuf, Storage(), Console(), false);
+
+	// Ranbi
+	str_format(aBuf, sizeof(aBuf), "ranbi/%s", g_Config.m_ClLanguagefile);
 	g_Localization.Load(aBuf, Storage(), Console(), false);
 
 	TextRender()->SetFontLanguageVariant(g_Config.m_ClLanguagefile);
