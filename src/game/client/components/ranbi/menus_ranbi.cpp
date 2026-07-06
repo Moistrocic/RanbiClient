@@ -68,10 +68,6 @@ void CMenus::RenderRanbiDDNetMore(CUIRect MainView)
 {
 }
 
-void CMenus::RenderRanbiTClientMore(CUIRect MainView)
-{
-}
-
 void CMenus::RenderRanbiInfo(CUIRect MainView)
 {
 	static CScrollRegion s_ScrollRegion;
@@ -127,7 +123,6 @@ void CMenus::RenderRanbi(CUIRect MainView)
 		RCLocalize("Settings"),
 		RCLocalize("Weapons Settings"),
 		RCLocalize("More DDNet"),
-		RCLocalize("More TClient"),
 		RCLocalize("Info")};
 
 	for(int Tab = 0; Tab < NUMBER_OF_RANBI_TABS; ++Tab)

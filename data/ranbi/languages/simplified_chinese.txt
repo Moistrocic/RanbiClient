@@ -11,6 +11,3 @@ Weapons Settings
 
 More DDNet
 == 更多DDNet选项
-
-More TClient
-== 更多TClient选项
