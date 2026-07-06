@@ -1117,6 +1117,7 @@ void CNamePlates::OnRender()
 			RenderNamePlateGame(RenderPos, pInfo, 1.0f);
 		}
 	}
+	GameClient()->m_RenderProxy.ProxyTrigger(RenderProxyTrigger::NamePlatesAfter);
 }
 
 void CNamePlates::OnWindowResize()
