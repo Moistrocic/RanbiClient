@@ -1063,9 +1063,8 @@ void CPlayers::RenderPlayer(
 
 			float WiggleAngle = std::sin(5 * Wiggle);
 
-			Graphics()->QuadsSetRotation(pi / 6 * WiggleAngle);
-
-			auto Proxy = [this, ClientId, QuadOffsetToEmoticon, a, Alpha, Position, h]() {
+			auto Proxy = [this, ClientId, QuadOffsetToEmoticon, a, Alpha, Position, h, WiggleAngle]() {
+				Graphics()->QuadsSetRotation(pi / 6 * WiggleAngle);
 				Graphics()->SetColor(1.0f, 1.0f, 1.0f, a * Alpha);
 				int QuadOffset = QuadOffsetToEmoticon + GameClient()->m_aClients[ClientId].m_Emoticon;
 				Graphics()->TextureSet(GameClient()->m_EmoticonsSkin.m_aSpriteEmoticons[GameClient()->m_aClients[ClientId].m_Emoticon]);
@@ -1489,8 +1488,7 @@ void CPlayers::RenderPlayerGhost(
 
 			float WiggleAngle = std::sin(5 * Wiggle);
 
-			Graphics()->QuadsSetRotation(pi / 6 * WiggleAngle);
-
+				Graphics()->QuadsSetRotation(pi / 6 * WiggleAngle);
 			Graphics()->SetColor(1.0f, 1.0f, 1.0f, a * Alpha);
 			// client_datas::emoticon is an offset from the first emoticon
 			int QuadOffset = QuadOffsetToEmoticon + GameClient()->m_aClients[ClientId].m_Emoticon;
