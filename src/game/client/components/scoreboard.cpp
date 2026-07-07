@@ -410,7 +410,7 @@ void CScoreboard::RenderSpectators(CUIRect Spectators)
 				m_ScoreboardPopupContext.m_IsSpectating = true;
 
 				Ui()->DoPopupMenu(&m_ScoreboardPopupContext, Ui()->MouseX(), Ui()->MouseY(), 110.0f,
-					m_ScoreboardPopupContext.m_IsLocal ? 30.0f : 80.0f, &m_ScoreboardPopupContext, CScoreboardPopupContext::Render);
+					m_ScoreboardPopupContext.m_IsLocal ? 30.0f : (g_Config.m_RcScoreboardCopyName ? 80.0f : 60.0f), &m_ScoreboardPopupContext, CScoreboardPopupContext::Render);
 			}
 
 			if(Ui()->HotItem() == &m_aPlayers[pInfo->m_ClientId].m_PlayerButtonId ||
@@ -679,7 +679,7 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 					m_ScoreboardPopupContext.m_IsSpectating = false;
 
 					Ui()->DoPopupMenu(&m_ScoreboardPopupContext, Ui()->MouseX(), Ui()->MouseY(), 110.0f,
-						m_ScoreboardPopupContext.m_IsLocal ? 58.5f : 107.5f, &m_ScoreboardPopupContext, CScoreboardPopupContext::Render);
+						m_ScoreboardPopupContext.m_IsLocal ? 58.5f : (g_Config.m_RcScoreboardCopyName ? 107.5f : 87.5f), &m_ScoreboardPopupContext, CScoreboardPopupContext::Render);
 				}
 
 				if(Ui()->HotItem() == &m_aPlayers[pInfo->m_ClientId].m_PlayerButtonId ||
@@ -1242,7 +1242,8 @@ CUi::EPopupMenuFunctionResult CScoreboard::CScoreboardPopupContext::Render(void 
 		}
 	}
 
-	if(!pPopupContext->m_IsLocal)
+	// RANBICLIENT m_RcScoreboardCopyName
+	if(!pPopupContext->m_IsLocal && g_Config.m_RcScoreboardCopyName)
 	{
 		View.HSplitTop(ItemSpacing * 2, nullptr, &View);
 		View.HSplitTop(ButtonSize, &Container, &View);
