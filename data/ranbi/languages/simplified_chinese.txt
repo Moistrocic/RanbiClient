@@ -233,3 +233,6 @@ Links
 
 Points
 == 分数
+
+Copy name
+== 复制名称
