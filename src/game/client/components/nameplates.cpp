@@ -1153,15 +1153,15 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 
 	// RANBICLIENT m_RcNameplatesShowPositionX
 	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX &&
-		GameClient()->m_Snap.m_aCharacters[pPlayerInfo->m_ClientId].m_Active;
+			       GameClient()->m_Snap.m_aCharacters[pPlayerInfo->m_ClientId].m_Active;
 	if(Data.m_ShowXPosition)
 	{
 		Data.m_XPosition = Position.x / 32.0f;
 
 		const int CurId = GameClient()->m_Snap.m_SpecInfo.m_Active &&
-				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ?
-				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId :
-				GameClient()->m_Snap.m_LocalClientId;
+						  GameClient()->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ?
+					  GameClient()->m_Snap.m_SpecInfo.m_SpectatorId :
+					  GameClient()->m_Snap.m_LocalClientId;
 		if(CurId >= 0 && CurId < MAX_CLIENTS)
 		{
 			float CurX = GameClient()->m_aClients[CurId].m_RenderPos.x / 32.0f;
@@ -1188,8 +1188,8 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 
 			if(g_Config.m_RcNameplatesShowPositionXMatched)
 				Data.m_XPositionColor = Matched ?
-					color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcNameplatesShowPositionXMatchedColor).WithAlpha(Data.m_Color.a)) :
-					ColorRGBA(1.0f, 0.0f, 0.0f, Data.m_Color.a);
+								color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcNameplatesShowPositionXMatchedColor).WithAlpha(Data.m_Color.a)) :
+								ColorRGBA(1.0f, 0.0f, 0.0f, Data.m_Color.a);
 			else
 				Data.m_XPositionColor = Data.m_Color;
 		}
@@ -1208,12 +1208,12 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 	Data.m_ShowDummyResetStatus = IsPlayer && !g_Config.m_ClDummyResetOnSwitch && g_Config.m_RcNameplatesShowDummyResetStatus;
 
 	// RANBICLIENT m_RcNameplatesRangeHidden
-	if(g_Config.m_RcNameplatesRangeHidden && Data.m_ShowName)
+	if(g_Config.m_RcNameplatesRangeHidden)
 	{
 		const int CurId = GameClient()->m_Snap.m_SpecInfo.m_Active &&
-				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ?
-				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId :
-				GameClient()->m_Snap.m_LocalClientId;
+						  GameClient()->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ?
+					  GameClient()->m_Snap.m_SpecInfo.m_SpectatorId :
+					  GameClient()->m_Snap.m_LocalClientId;
 		if(CurId >= 0 && CurId < MAX_CLIENTS && pPlayerInfo->m_ClientId != CurId)
 		{
 			vec2 CurPos = GameClient()->m_aClients[CurId].m_RenderPos;
@@ -1221,19 +1221,14 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 			if(Dist <= (float)absolute(g_Config.m_RcNameplatesRangeHiddenRadius) * 32.0f)
 			{
 				bool InAngle = true;
-			if(g_Config.m_RcNameplatesRangeHiddenAngleStart != 0 || g_Config.m_RcNameplatesRangeHiddenAngleEnd != 360)
-			{
-				float AimDeg = GameClient()->m_aClients[CurId].m_Predicted.m_Angle / 256.0f * 360.0f;
-				float MathDeg = angle(Position - CurPos) * 180.0f / pi;
-				float TargetDeg = fmod(360.0f - MathDeg + 360.0f, 360.0f);
-				float DiffDeg = fmod(TargetDeg - AimDeg + 360.0f, 360.0f);
+				float MathDeg = angle(CurPos - Position) * 180.0f / pi;
+				float AbsDeg = fmod(360.0f - MathDeg + 360.0f, 360.0f);
 				int Start = g_Config.m_RcNameplatesRangeHiddenAngleStart;
 				int End = g_Config.m_RcNameplatesRangeHiddenAngleEnd;
 				if(Start <= End)
-					InAngle = DiffDeg >= (float)Start && DiffDeg <= (float)End;
+					InAngle = AbsDeg >= (float)Start && AbsDeg <= (float)End;
 				else
-					InAngle = DiffDeg >= (float)Start || DiffDeg <= (float)End;
-				}
+					InAngle = AbsDeg >= (float)Start || AbsDeg <= (float)End;
 				if(InAngle)
 				{
 					if(g_Config.m_RcNameplatesRangeHiddenName)

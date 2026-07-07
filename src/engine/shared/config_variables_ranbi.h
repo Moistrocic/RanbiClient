@@ -41,7 +41,7 @@ MACRO_CONFIG_INT(RcNameplatesRangeHiddenStatus, rc_nameplates_range_hidden_statu
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenHookStatus, rc_nameplates_range_hidden_hook_status, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenLove, rc_nameplates_range_hidden_love, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenOthers, rc_nameplates_range_hidden_others, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
-MACRO_CONFIG_INT(RcNameplatesRangeHiddenRadius, rc_nameplates_range_hidden_radius, 6, -10, 10, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcNameplatesRangeHiddenRadius, rc_nameplates_range_hidden_radius, 10, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenAngleStart, rc_nameplates_range_hidden_angle_start, 0, 0, 360, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenAngleEnd, rc_nameplates_range_hidden_angle_end, 360, 0, 360, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
