@@ -25,7 +25,7 @@ extern const char *GIT_SHORTREV_HASH;
 
 // Ranbi
 #ifndef RANBI_VERSION
-#define RANBI_VERSION "1.0.0"
+#define RANBI_VERSION "1.0.1"
 #endif
 
 // custom
