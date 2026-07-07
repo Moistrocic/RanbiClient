@@ -1167,7 +1167,7 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 			float CurX = GameClient()->m_aClients[CurId].m_RenderPos.x / 32.0f;
 			bool Matched = false;
 
-			if(pPlayerInfo->m_ClientId == CurId)
+			if(g_Config.m_RcNameplatesShowPositionXMatched && pPlayerInfo->m_ClientId == CurId)
 			{
 				for(int i = 0; i < MAX_CLIENTS; i++)
 				{
@@ -1183,12 +1183,15 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 			}
 			else
 			{
-				Matched = absolute(Data.m_XPosition - CurX) < 0.02f;
+				Matched = g_Config.m_RcNameplatesShowPositionXMatched && absolute(Data.m_XPosition - CurX) < 0.02f;
 			}
 
-			Data.m_XPositionColor = Matched ?
-				color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcNameplatesShowPositionXMatchedColor).WithAlpha(Data.m_Color.a)) :
-				ColorRGBA(1.0f, 0.0f, 0.0f, Data.m_Color.a);
+			if(g_Config.m_RcNameplatesShowPositionXMatched)
+				Data.m_XPositionColor = Matched ?
+					color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcNameplatesShowPositionXMatchedColor).WithAlpha(Data.m_Color.a)) :
+					ColorRGBA(1.0f, 0.0f, 0.0f, Data.m_Color.a);
+			else
+				Data.m_XPositionColor = Data.m_Color;
 		}
 	}
 
