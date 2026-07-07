@@ -2354,6 +2354,12 @@ void CGameClient::OnNewSnapshot()
 			CNetMsg_Cl_ShowDistance Msg;
 			float x, y;
 			Graphics()->CalcScreenParams(Graphics()->ScreenAspect(), ShowDistanceZoom, &x, &y);
+			// RANBICLIENT m_RcShowAllPlayers
+			if(g_Config.m_RcShowAllPlayers)
+			{
+				x = 50000.0f;
+				y = 50000.0f;
+			}
 			Msg.m_X = x;
 			Msg.m_Y = y;
 			CMsgPacker Packer(&Msg);
@@ -2377,6 +2383,12 @@ void CGameClient::OnNewSnapshot()
 		CNetMsg_Cl_ShowDistance Msg;
 		float x, y;
 		Graphics()->CalcScreenParams(Graphics()->ScreenAspect(), ShowDistanceZoom, &x, &y);
+		// RANBICLIENT m_RcShowAllPlayers
+		if(g_Config.m_RcShowAllPlayers)
+		{
+			x = 50000.0f;
+			y = 50000.0f;
+		}
 		Msg.m_X = x;
 		Msg.m_Y = y;
 		Client()->ChecksumData()->m_Zoom = ShowDistanceZoom;

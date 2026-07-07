@@ -236,3 +236,6 @@ Points
 
 Copy name
 == 复制名称
+
+Receive all players (may reduce frame rate)
+== 接收所有玩家位置信息（可能会降低帧率）

@@ -100,6 +100,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcShowSpectatorSkin, RCLocalize("Show spectator skin"), &g_Config.m_RcShowSpectatorSkin, &Column, s_LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcShowAllPlayers, RCLocalize("Receive all players (may reduce frame rate)"), &g_Config.m_RcShowAllPlayers, &Column, s_LineSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	// Skip three tiles
