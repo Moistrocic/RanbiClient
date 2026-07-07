@@ -58,23 +58,19 @@ void CWeapons::ConSwitchRecentWeapon(IConsole::IResult *pResult, void *pUserData
 	if(!pResult->GetInteger(0))
 		return;
 
-	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
-	{
-		int RecentWeapon = pThis->m_aRecentWeapon[Dummy];
-		if(RecentWeapon < 0 || RecentWeapon >= NUM_WEAPONS)
-			continue;
+	int Dummy = g_Config.m_ClDummy;
+	int RecentWeapon = pThis->m_aRecentWeapon[Dummy];
+	if(RecentWeapon < 0 || RecentWeapon >= NUM_WEAPONS)
+		return;
 
-		int LocalId = pThis->GameClient()->m_aLocalIds[Dummy];
-		if(LocalId < 0 || LocalId >= MAX_CLIENTS)
-			continue;
+	int LocalId = pThis->GameClient()->m_aLocalIds[Dummy];
+	if(LocalId < 0 || LocalId >= MAX_CLIENTS)
+		return;
 
-		const CGameClient::CClientData &Client = pThis->GameClient()->m_aClients[LocalId];
-		if(!Client.m_Active)
-			continue;
+	const CGameClient::CClientData &Client = pThis->GameClient()->m_aClients[LocalId];
+	if(!Client.m_Active)
+		return;
 
-		if(Client.m_Predicted.m_aWeapons[RecentWeapon].m_Got)
-		{
-			pThis->GameClient()->m_Controls.m_aInputData[Dummy].m_WantedWeapon = RecentWeapon + 1;
-		}
-	}
+	if(Client.m_Predicted.m_aWeapons[RecentWeapon].m_Got)
+		pThis->GameClient()->m_Controls.m_aInputData[Dummy].m_WantedWeapon = RecentWeapon + 1;
 }
