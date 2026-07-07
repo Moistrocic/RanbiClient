@@ -19,6 +19,7 @@ public:
 
 	void OnConsoleInit() override;
 	void OnUpdate() override;
+	void OnRender() override;
 	void OnReset() override;
 };
 

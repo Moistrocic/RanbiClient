@@ -116,10 +116,9 @@ void CGameClient::OnConsoleInit()
 	m_pMap = CreateMap();
 
 	// make a list of all the systems, make sure to add them in the correct render order
-	m_vpAll.insert(m_vpAll.end(), {&m_RenderProxy,
-						      &m_Points,
-						      &m_RanbiClient,
-					      &m_Weapons,
+	m_vpAll.insert(m_vpAll.end(), {&m_RenderProxy, // RanbiClient
+					      &m_Points, // RanbiClient
+					      &m_RanbiClient, // RanbiClient
 					      &m_Skins,
 					      &m_Skins7,
 					      &m_CountryFlags,
@@ -164,6 +163,7 @@ void CGameClient::OnConsoleInit()
 					      &m_Mod, // TClient
 					      &m_CustomCommunities, // TClient
 					      &m_Hud,
+					      &m_Weapons, // RanbiClient
 					      &m_Spectator,
 					      &m_Emoticon,
 					      &m_BindChat, // TClient

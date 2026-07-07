@@ -49,6 +49,9 @@ MACRO_CONFIG_INT(RcChatSkipRepeatHistory, rc_chat_skip_repeat_history, 0, 0, 1, 
 MACRO_CONFIG_INT(RcChatShowPoints, rc_chat_show_points, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
 MACRO_CONFIG_INT(RcShowWeaponsAngle, rc_show_weapons_angle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcWeaponsAngleInnerRadius, rc_weapons_angle_inner_radius, 16, 0, 800, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcWeaponsAngleRadius, rc_weapons_angle_radius, 64, 0, 800, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcWeaponsAngleFontSize, rc_weapons_angle_font_size, 12, 6, 24, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcShowEnableSkipThreeTiles, rc_show_enable_skip_three_tiles, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcShowEnableSkipThreeTilesInfoSize, rc_show_enable_skip_three_tiles_info_size, 10, 0, 50, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_COL(RcShowEnableSkipThreeTilesInfoColor, rc_show_enable_skip_three_tiles_info_color, 8191872, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")

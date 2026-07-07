@@ -294,16 +294,28 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcShowWeaponsAngle, RCLocalize("Show weapons angle"), &g_Config.m_RcShowWeaponsAngle, &Column, s_LineSize);
 
+	if(g_Config.m_RcShowWeaponsAngle)
+	{
+		Column.HSplitTop(s_LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_RcWeaponsAngleInnerRadius, &g_Config.m_RcWeaponsAngleInnerRadius, &Button, RCLocalize("Weapons angle inner radius"), 0, 800);
+		Column.HSplitTop(s_LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_RcWeaponsAngleRadius, &g_Config.m_RcWeaponsAngleRadius, &Button, RCLocalize("Weapons angle outer radius"), 0, 800);
+		Column.HSplitTop(s_LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_RcWeaponsAngleFontSize, &g_Config.m_RcWeaponsAngleFontSize, &Button, RCLocalize("Weapons angle font size"), 6, 24);
+	}
+
 	Column.HSplitTop(s_MarginExtraSmall, nullptr, &Column);
 
 	// Edit panel - uses independent s_EditWeapon, loaded from selected row on click
 	static SWeaponInfo s_EditWeapon;
+	static bool s_AngleInit = false;
 
 	if(s_SelectedWeapon != s_LastSelected)
 	{
 		s_LastSelected = s_SelectedWeapon;
 		if(s_SelectedWeapon >= 0 && s_SelectedWeapon < (int)vWeapons.size())
 			s_EditWeapon = vWeapons[s_SelectedWeapon];
+		s_AngleInit = false;
 	}
 
 	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
@@ -328,7 +340,6 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 
 	static char s_aAngleMin[32];
 	static char s_aAngleMax[32];
-	static bool s_AngleInit = false;
 	if(!s_AngleInit || s_SelectedWeapon != s_LastSelected)
 	{
 		str_format(s_aAngleMin, sizeof(s_aAngleMin), "%.2f", s_EditWeapon.m_AngleStart);
