@@ -67,7 +67,13 @@ def check_folder(path):
 		for f in sorted(files):
 			if not any(f.endswith(x) for x in [".cpp", ".c", ".h"]):
 				continue
-			for sentence in check_file(os.path.join(path2, f)):
+			filepath = os.path.join(path2, f)
+			with open(filepath, encoding="utf-8", errors="ignore") as fobj:
+				content = fobj.read()
+			in_ranbi = "/ranbi" in path2.replace("\\", "/")
+			if not in_ranbi and "RANBICLIENT" not in content:
+				continue
+			for sentence in re.findall(r"RCLocalize\s*\(\s*\"((?:(?:\\\")|[^\"])+)\"(?:\s*,\s*\"((?:(?:\\\")|[^\"])+)\")?\s*\)", content):
 				key = (sentence[0].replace("\\\"", "\""), sentence[1].replace("\\\"", "\""))
 				englishlist[key] = None
 	return englishlist
@@ -86,5 +92,5 @@ def translations(filename):
 
 
 def localizes():
-	englishlist = list(check_folder("../src/game/client/components/ranbi"))
+	englishlist = list(check_folder("../src/game/client/components"))
 	return englishlist

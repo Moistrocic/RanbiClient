@@ -239,3 +239,24 @@ Copy name
 
 Receive all players (may reduce frame rate)
 == 接收所有玩家位置信息（可能会降低帧率）
+
+Skin %s
+== 皮肤 %s
+
+Range hidden radius
+== 范围隐藏半径
+
+Range hidden angle start
+== 范围隐藏起始角度
+
+Range hidden angle end
+== 范围因此终点角度
+
+Weapons angle inner radius
+== 武器角度内半径
+
+Weapons angle outer radius
+== 武器角度外半径
+
+Weapons angle font size
+== 武器角度字体尺寸
