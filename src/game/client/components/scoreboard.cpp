@@ -678,8 +678,14 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 									     (Client()->DummyConnected() && GameClient()->m_aLocalIds[1] == pInfo->m_ClientId);
 					m_ScoreboardPopupContext.m_IsSpectating = false;
 
+					// RANBICLIENT m_RcScoreboardCopyName
+					bool isActivePlayer = g_Config.m_RcScoreboardCopyName ?
+								      GameClient()->m_aLocalIds[g_Config.m_ClDummy] == pInfo->m_ClientId :
+								      m_ScoreboardPopupContext.m_IsLocal;
+
 					Ui()->DoPopupMenu(&m_ScoreboardPopupContext, Ui()->MouseX(), Ui()->MouseY(), 110.0f,
-						m_ScoreboardPopupContext.m_IsLocal ? 58.5f : (g_Config.m_RcScoreboardCopyName ? 107.5f : 87.5f), &m_ScoreboardPopupContext, CScoreboardPopupContext::Render);
+						isActivePlayer ? 58.5f : (g_Config.m_RcScoreboardCopyName ? 107.5f : 87.5f),
+						&m_ScoreboardPopupContext, CScoreboardPopupContext::Render);
 				}
 
 				if(Ui()->HotItem() == &m_aPlayers[pInfo->m_ClientId].m_PlayerButtonId ||
@@ -1157,7 +1163,9 @@ CUi::EPopupMenuFunctionResult CScoreboard::CScoreboardPopupContext::Render(void 
 	View.HSplitTop(FontSize, &Label, &View);
 	pUi->DoLabel(&Label, Client.m_aName, FontSize, TEXTALIGN_ML);
 
-	if(!pPopupContext->m_IsLocal)
+	bool IsActivePlayer = pScoreboard->GameClient()->m_aLocalIds[g_Config.m_ClDummy] == pPopupContext->m_ClientId;
+	// RANBICLIENT m_RcScoreboardCopyName
+	if(!pPopupContext->m_IsLocal || (g_Config.m_RcScoreboardCopyName && !IsActivePlayer))
 	{
 		const int ActionsNum = 3;
 		const float ActionSize = 25.0f;
@@ -1243,22 +1251,24 @@ CUi::EPopupMenuFunctionResult CScoreboard::CScoreboardPopupContext::Render(void 
 	}
 
 	// RANBICLIENT m_RcScoreboardCopyName
-	if(!pPopupContext->m_IsLocal && g_Config.m_RcScoreboardCopyName)
+	if(g_Config.m_RcScoreboardCopyName)
 	{
-		View.HSplitTop(ItemSpacing * 2, nullptr, &View);
-		View.HSplitTop(ButtonSize, &Container, &View);
-
-		if(pUi->DoButton_PopupMenu(&pPopupContext->m_CopyNameButton, RCLocalize("Copy name"), &Container, FontSize, TEXTALIGN_MC, 0.0f, false, true))
+		if(!IsActivePlayer)
 		{
-			if(g_Config.m_ClDummy == 0)
+			View.HSplitTop(ItemSpacing * 2, nullptr, &View);
+			View.HSplitTop(ButtonSize, &Container, &View);
+			if(pUi->DoButton_PopupMenu(&pPopupContext->m_CopyNameButton, RCLocalize("Copy name"), &Container, FontSize, TEXTALIGN_MC, 0.0f, false, true))
 			{
-				str_copy(g_Config.m_PlayerName, Client.m_aName, sizeof(g_Config.m_PlayerName));
-				pScoreboard->GameClient()->SendInfo(false);
-			}
-			else
-			{
-				str_copy(g_Config.m_ClDummyName, Client.m_aName, sizeof(g_Config.m_ClDummyName));
-				pScoreboard->GameClient()->SendDummyInfo(false);
+				if(g_Config.m_ClDummy == 0)
+				{
+					str_copy(g_Config.m_PlayerName, Client.m_aName, sizeof(g_Config.m_PlayerName));
+					pScoreboard->GameClient()->SendInfo(false);
+				}
+				else
+				{
+					str_copy(g_Config.m_ClDummyName, Client.m_aName, sizeof(g_Config.m_ClDummyName));
+					pScoreboard->GameClient()->SendDummyInfo(false);
+				}
 			}
 		}
 	}
