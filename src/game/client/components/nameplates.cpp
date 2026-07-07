@@ -57,6 +57,7 @@ public:
 
 	bool m_ShowXPosition = false;
 	float m_XPosition = 0.0f;
+	ColorRGBA m_XPositionColor = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f);
 
 	bool m_ShowFinished = false;
 
@@ -744,7 +745,7 @@ protected:
 		m_Visible = Data.m_ShowXPosition;
 		if(!m_Visible)
 			return false;
-		m_Color = Data.m_Color;
+		m_Color = Data.m_XPositionColor;
 		return m_FontSize != Data.m_FontSize || m_XPosition != Data.m_XPosition;
 	}
 	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
@@ -1151,9 +1152,45 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 	Data.m_ShowPoints = Data.m_ShowPoints && Data.m_Points != -1;
 
 	// RANBICLIENT m_RcNameplatesShowPositionX
-	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX;
+	Data.m_ShowXPosition = Data.m_ShowName && g_Config.m_RcNameplatesShowPositionX &&
+		GameClient()->m_Snap.m_aCharacters[pPlayerInfo->m_ClientId].m_Active;
 	if(Data.m_ShowXPosition)
-		Data.m_XPosition = GameClient()->m_aClients[pPlayerInfo->m_ClientId].m_Predicted.m_Pos.x / 32.0f;
+	{
+		Data.m_XPosition = Position.x / 32.0f;
+
+		const int CurId = GameClient()->m_Snap.m_SpecInfo.m_Active &&
+				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ?
+				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId :
+				GameClient()->m_Snap.m_LocalClientId;
+		if(CurId >= 0 && CurId < MAX_CLIENTS)
+		{
+			float CurX = GameClient()->m_aClients[CurId].m_RenderPos.x / 32.0f;
+			bool Matched = false;
+
+			if(pPlayerInfo->m_ClientId == CurId)
+			{
+				for(int i = 0; i < MAX_CLIENTS; i++)
+				{
+					if(i == CurId || !GameClient()->m_Snap.m_aCharacters[i].m_Active)
+						continue;
+					float OtherX = GameClient()->m_aClients[i].m_RenderPos.x / 32.0f;
+					if(absolute(OtherX - CurX) < 0.02f)
+					{
+						Matched = true;
+						break;
+					}
+				}
+			}
+			else
+			{
+				Matched = absolute(Data.m_XPosition - CurX) < 0.02f;
+			}
+
+			Data.m_XPositionColor = Matched ?
+				color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcNameplatesShowPositionXMatchedColor).WithAlpha(Data.m_Color.a)) :
+				ColorRGBA(1.0f, 0.0f, 0.0f, Data.m_Color.a);
+		}
+	}
 
 	// RANBICLIENT m_RcNameplatesShowFinished
 	Data.m_ShowFinished = g_Config.m_RcNameplatesShowFinished;
