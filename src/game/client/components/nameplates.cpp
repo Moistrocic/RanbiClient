@@ -1196,7 +1196,12 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 	}
 
 	// RANBICLIENT m_RcNameplatesShowFinished
-	Data.m_ShowFinished = g_Config.m_RcNameplatesShowFinished;
+	bool HasFinish = false;
+	if(GameClient()->m_ReceivedDDNetPlayerFinishTimes)
+		HasFinish = ClientData.m_FinishTimeSeconds != FinishTime::NOT_FINISHED_MILLIS;
+	else
+		HasFinish = pPlayerInfo->m_Score != FinishTime::NOT_FINISHED_TIMESCORE;
+	Data.m_ShowFinished = g_Config.m_RcNameplatesShowFinished && HasFinish;
 
 	// RANBICLIENT m_RcNameplatesShowDummyCopyStatus
 	Data.m_ShowDummyCopyStatus = IsPlayer && g_Config.m_ClDummyCopyMoves && g_Config.m_RcNameplatesShowDummyCopyStatus;
