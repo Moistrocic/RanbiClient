@@ -1204,6 +1204,66 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 	// RANBICLIENT m_RcNameplatesShowDummyResetStatus
 	Data.m_ShowDummyResetStatus = IsPlayer && !g_Config.m_ClDummyResetOnSwitch && g_Config.m_RcNameplatesShowDummyResetStatus;
 
+	// RANBICLIENT m_RcNameplatesRangeHidden
+	if(g_Config.m_RcNameplatesRangeHidden && Data.m_ShowName)
+	{
+		const int CurId = GameClient()->m_Snap.m_SpecInfo.m_Active &&
+				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ?
+				GameClient()->m_Snap.m_SpecInfo.m_SpectatorId :
+				GameClient()->m_Snap.m_LocalClientId;
+		if(CurId >= 0 && CurId < MAX_CLIENTS && pPlayerInfo->m_ClientId != CurId)
+		{
+			vec2 CurPos = GameClient()->m_aClients[CurId].m_RenderPos;
+			float Dist = distance(CurPos, Position);
+			if(Dist <= (float)absolute(g_Config.m_RcNameplatesRangeHiddenRadius) * 32.0f)
+			{
+				bool InAngle = true;
+			if(g_Config.m_RcNameplatesRangeHiddenAngleStart != 0 || g_Config.m_RcNameplatesRangeHiddenAngleEnd != 360)
+			{
+				float AimDeg = GameClient()->m_aClients[CurId].m_Predicted.m_Angle / 256.0f * 360.0f;
+				float MathDeg = angle(Position - CurPos) * 180.0f / pi;
+				float TargetDeg = fmod(360.0f - MathDeg + 360.0f, 360.0f);
+				float DiffDeg = fmod(TargetDeg - AimDeg + 360.0f, 360.0f);
+				int Start = g_Config.m_RcNameplatesRangeHiddenAngleStart;
+				int End = g_Config.m_RcNameplatesRangeHiddenAngleEnd;
+				if(Start <= End)
+					InAngle = DiffDeg >= (float)Start && DiffDeg <= (float)End;
+				else
+					InAngle = DiffDeg >= (float)Start || DiffDeg <= (float)End;
+				}
+				if(InAngle)
+				{
+					if(g_Config.m_RcNameplatesRangeHiddenName)
+						Data.m_ShowName = false;
+					if(g_Config.m_RcNameplatesRangeHiddenPoints)
+						Data.m_ShowPoints = false;
+					if(g_Config.m_RcNameplatesRangeHiddenPositionX)
+						Data.m_ShowXPosition = false;
+					if(g_Config.m_RcNameplatesRangeHiddenFinished)
+						Data.m_ShowFinished = false;
+					if(g_Config.m_RcNameplatesRangeHiddenStatus)
+					{
+						Data.m_ShowDummyCopyStatus = false;
+						Data.m_ShowHammerFlyStatus = false;
+						Data.m_ShowDummyResetStatus = false;
+					}
+					if(g_Config.m_RcNameplatesRangeHiddenHookStatus)
+					{
+						Data.m_ShowHookStrongWeak = false;
+						Data.m_ShowHookStrongWeakId = false;
+					}
+					if(g_Config.m_RcNameplatesRangeHiddenLove)
+						Data.m_ShowFriendMark = false;
+					if(g_Config.m_RcNameplatesRangeHiddenOthers)
+					{
+						Data.m_ShowDirection = false;
+						Data.m_ShowClan = false;
+					}
+				}
+			}
+		}
+	}
+
 	// Check if the nameplate is actually on screen
 	CNamePlate &NamePlate = m_pData->m_aNamePlates[pPlayerInfo->m_ClientId];
 	NamePlate.Update(*GameClient(), Data);

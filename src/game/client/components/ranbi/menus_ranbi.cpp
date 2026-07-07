@@ -224,6 +224,13 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcNameplatesRangeHiddenHookStatus, RCLocalize("Range hidden hook status"), &g_Config.m_RcNameplatesRangeHiddenHookStatus, &Column, s_LineSize);
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcNameplatesRangeHiddenLove, RCLocalize("Range hidden love"), &g_Config.m_RcNameplatesRangeHiddenLove, &Column, s_LineSize);
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcNameplatesRangeHiddenOthers, RCLocalize("Range hidden others"), &g_Config.m_RcNameplatesRangeHiddenOthers, &Column, s_LineSize);
+
+		Column.HSplitTop(s_LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_RcNameplatesRangeHiddenRadius, &g_Config.m_RcNameplatesRangeHiddenRadius, &Button, RCLocalize("Range hidden radius"), -10, 10);
+		Column.HSplitTop(s_LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_RcNameplatesRangeHiddenAngleStart, &g_Config.m_RcNameplatesRangeHiddenAngleStart, &Button, RCLocalize("Range hidden angle start"), 0, 360);
+		Column.HSplitTop(s_LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_RcNameplatesRangeHiddenAngleEnd, &g_Config.m_RcNameplatesRangeHiddenAngleEnd, &Button, RCLocalize("Range hidden angle end"), 0, 360);
 	}
 
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
