@@ -412,10 +412,20 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 
 	// Right: weapon list
 	Column = RightView;
+	CUIRect ListView = Column;
+
+	static CScrollRegion s_ListScrollRegion;
+	vec2 ListScrollOffset(0.0f, 0.0f);
+	CScrollRegionParams ListScrollParams;
+	ListScrollParams.m_ScrollUnit = 60.0f;
+	ListScrollParams.m_Flags = CScrollRegionParams::FLAG_CONTENT_STATIC_WIDTH;
+	ListScrollParams.m_ScrollbarMargin = 5.0f;
+	s_ListScrollRegion.Begin(&ListView, &ListScrollOffset, &ListScrollParams);
+	ListView.y += ListScrollOffset.y;
 
 	CUIRect ListBox;
-	Column.HSplitTop(s_Margin, nullptr, &Column);
-	ListBox = Column;
+	ListView.HSplitTop(s_Margin, nullptr, &ListView);
+	ListBox = ListView;
 
 	float HeaderH = s_LineSize + s_MarginExtraSmall;
 	float RowH = s_LineSize + s_MarginExtraSmall;
@@ -494,6 +504,14 @@ void CMenus::RenderRanbiWeaponsSettings(CUIRect MainView)
 
 	if(!vWeapons.empty())
 		ListBox.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.15f), IGraphics::CORNER_B, 5.0f);
+
+	CUIRect ListScrollRect;
+	ListScrollRect.x = Column.x;
+	ListScrollRect.y = Column.y + s_Margin;
+	ListScrollRect.w = Column.w;
+	ListScrollRect.h = ListBox.y - ListScrollRect.y;
+	s_ListScrollRegion.AddRect(ListScrollRect);
+	s_ListScrollRegion.End();
 }
 
 void CMenus::RenderRanbiDDNetMore(CUIRect MainView)
