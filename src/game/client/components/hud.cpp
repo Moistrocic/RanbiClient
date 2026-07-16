@@ -2080,38 +2080,31 @@ void CHud::OnRender()
 		if(Mode != 0)
 		{
 			const auto *pLayer = GameClient()->Layers()->GameLayer();
-			if(pLayer)
+			const int Index = (int)PlayerPos.y * pLayer->m_Width + (int)PlayerPos.x;
+			if(Index > 0 && Index + 1 < pLayer->m_Height * pLayer->m_Width)
 			{
-				const auto *pTiles = (CTile *)GameClient()->Layers()->Map()->GetData(pLayer->m_Data);
-				if(pTiles)
+				bool Freeze = CheckTileFreeze(LAYER_GAME, Index) || CheckTileFreeze(LAYER_SWITCH, Index);
+				bool LeftFreeze = CheckTileFreeze(LAYER_GAME, Index - 1) || CheckTileFreeze(LAYER_SWITCH, Index - 1);
+				bool RightFreeze = CheckTileFreeze(LAYER_GAME, Index + 1) || CheckTileFreeze(LAYER_SWITCH, Index + 1);
+				if(!Freeze && (LeftFreeze || RightFreeze))
 				{
-					const int Index = (int)PlayerPos.y * pLayer->m_Width + (int)PlayerPos.x;
-					if(Index > 0 && Index + 1 < pLayer->m_Height * pLayer->m_Width)
+					const char *Text = "";
+					switch(Mode)
 					{
-						const auto Tile = pTiles[Index].m_Index;
-						const auto LeftTile = pTiles[Index - 1].m_Index;
-						const auto RightTile = pTiles[Index + 1].m_Index;
-						if(Tile != TILE_FREEZE && (LeftTile == TILE_FREEZE || RightTile == TILE_FREEZE))
-						{
-							const char *Text = "";
-							switch(Mode)
-							{
-							case 1: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionLeftText; break;
-							case 2: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionRightText; break;
-							case 3: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionDJLeftText; break;
-							case 4: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionDJRightText; break;
-							}
-							if((LeftTile == TILE_FREEZE && Mode & 1) || (RightTile == TILE_FREEZE && !(Mode & 1)))
-							{
-								float FontSize = g_Config.m_RcShowEnableSkipThreeTilesInfoSize;
-								float XPos = std::clamp((g_Config.m_RcShowEnableSkipThreeTilesInfoPositionX / 100.0f) * m_Width, 1.0f, m_Width - FontSize);
-								float YPos = std::clamp((g_Config.m_RcShowEnableSkipThreeTilesInfoPositionY / 100.0f) * m_Height, 1.0f, m_Height - FontSize);
-								ColorRGBA Color = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcShowEnableSkipThreeTilesInfoColor));
-								TextRender()->TextColor(Color);
-								TextRender()->Text(XPos, YPos, FontSize, Text, -1.0f);
-								TextRender()->TextColor(TextRender()->DefaultTextColor());
-							}
-						}
+					case 1: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionLeftText; break;
+					case 2: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionRightText; break;
+					case 3: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionDJLeftText; break;
+					case 4: Text = g_Config.m_RcShowEnableSkipThreeTilesInfoPositionDJRightText; break;
+					}
+					if((LeftFreeze && Mode & 1) || (RightFreeze && !(Mode & 1)))
+					{
+						float FontSize = g_Config.m_RcShowEnableSkipThreeTilesInfoSize;
+						float XPos = std::clamp((g_Config.m_RcShowEnableSkipThreeTilesInfoPositionX / 100.0f) * m_Width, 1.0f, m_Width - FontSize);
+						float YPos = std::clamp((g_Config.m_RcShowEnableSkipThreeTilesInfoPositionY / 100.0f) * m_Height, 1.0f, m_Height - FontSize);
+						ColorRGBA Color = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_RcShowEnableSkipThreeTilesInfoColor));
+						TextRender()->TextColor(Color);
+						TextRender()->Text(XPos, YPos, FontSize, Text, -1.0f);
+						TextRender()->TextColor(TextRender()->DefaultTextColor());
 					}
 				}
 			}
@@ -2119,6 +2112,26 @@ void CHud::OnRender()
 	}
 
 	RenderCursor();
+}
+
+bool CHud::CheckTileFreeze(int Layer, int Index)
+{
+	if(Layer == LAYER_GAME)
+	{
+		const auto *pLayer = GameClient()->Layers()->GameLayer();
+		const auto *pTiles = (CTile *)GameClient()->Layers()->Map()->GetData(pLayer->m_Data);
+
+		const auto Tile = pTiles[Index].m_Index;
+		if(Tile == TILE_FREEZE || Tile == TILE_DFREEZE || Tile == TILE_LFREEZE)
+			return true;
+	}
+	else if(Layer == LAYER_SWITCH)
+	{
+		int Tile = GameClient()->Collision()->GetSwitchType(Index);
+		if(Tile == TILE_FREEZE || Tile == TILE_DFREEZE || Tile == TILE_LFREEZE)
+			return true;
+	}
+	return false;
 }
 
 void CHud::OnMessage(int MsgType, void *pRawMsg)

@@ -120,6 +120,7 @@ public:
 
 	// DDRace
 
+	bool CheckTileFreeze(int Layer, int Index);
 	void OnMessage(int MsgType, void *pRawMsg) override;
 	void RenderNinjaBarPos(float x, float y, float Width, float Height, float Progress, float Alpha = 1.0f);
 
