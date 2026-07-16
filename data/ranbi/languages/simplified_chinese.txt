@@ -48,8 +48,8 @@ Scoreboard copy name
 Chat
 == 聊天
 
-Chat skip repeat history
-== 聊天框跳过历史重复文本
+Chat no duplicate history
+== 聊天框不添加历史重复文本
 
 Chat show ddrace points
 == 聊天框显示DDRace分数

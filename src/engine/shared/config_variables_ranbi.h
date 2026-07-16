@@ -45,7 +45,7 @@ MACRO_CONFIG_INT(RcNameplatesRangeHiddenRadius, rc_nameplates_range_hidden_radiu
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenAngleStart, rc_nameplates_range_hidden_angle_start, 0, 0, 360, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcNameplatesRangeHiddenAngleEnd, rc_nameplates_range_hidden_angle_end, 360, 0, 360, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
-MACRO_CONFIG_INT(RcChatSkipRepeatHistory, rc_chat_skip_repeat_history, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcChatNoDuplicateHistory, rc_chat_no_duplicate_history, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcChatShowPoints, rc_chat_show_points, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
 MACRO_CONFIG_INT(RcShowWeaponsAngle, rc_show_weapons_angle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")

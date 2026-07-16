@@ -174,7 +174,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Ui()->DoLabel(&Label, RCLocalize("Chat"), s_HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcChatSkipRepeatHistory, RCLocalize("Chat skip repeat history"), &g_Config.m_RcChatSkipRepeatHistory, &Column, s_LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcChatNoDuplicateHistory, RCLocalize("Chat no duplicate history"), &g_Config.m_RcChatNoDuplicateHistory, &Column, s_LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcChatShowPoints, RCLocalize("Chat show ddrace points"), &g_Config.m_RcChatShowPoints, &Column, s_LineSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
