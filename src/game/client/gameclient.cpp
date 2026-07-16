@@ -552,9 +552,6 @@ void CGameClient::OnDummySwap()
 	}
 	const int PrevDummyFire = m_DummyInput.m_Fire;
 	m_DummyInput = m_Controls.m_aInputData[!g_Config.m_ClDummy];
-	// RANBICLIENT m_RcHammerFix
-	if(g_Config.m_RcHammerFix && g_Config.m_ClDummyCopyMoves)
-		m_DummyInput.m_Fire = PrevDummyFire;
 	m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = PrevDummyFire;
 
 	// RANBICLIENT m_RcCursorCopy
@@ -3734,6 +3731,23 @@ void CGameClient::ConchainSpecialDummy(IConsole::IResult *pResult, void *pUserDa
 	{
 		if(g_Config.m_ClDummy && !((CGameClient *)pUserData)->Client()->DummyConnected())
 			g_Config.m_ClDummy = 0;
+
+		// RANBICLIENT m_RcHammerFix
+		if(g_Config.m_RcHammerFix && g_Config.m_ClDummyCopyMoves)
+		{
+			auto *pControls = &((CGameClient *)pUserData)->m_Controls;
+			int *apCounters[] = {
+				&pControls->m_aInputData[g_Config.m_ClDummy].m_Fire,
+				&pControls->m_aInputData[!g_Config.m_ClDummy].m_Fire,
+				&pControls->m_aLastData[g_Config.m_ClDummy].m_Fire,
+				&pControls->m_aLastData[!g_Config.m_ClDummy].m_Fire};
+			for(int *pFire : apCounters)
+			{
+				if(*pFire & 1)
+					(*pFire)++;
+				*pFire &= INPUT_STATE_MASK;
+			}
+		}
 	}
 }
 
