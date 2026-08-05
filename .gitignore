@@ -147,3 +147,5 @@ tags
 /build
 
 !steam_api.dll
+
+/.reasonix
