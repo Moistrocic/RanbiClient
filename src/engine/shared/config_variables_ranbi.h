@@ -64,3 +64,8 @@ MACRO_CONFIG_STR(RcShowEnableSkipThreeTilesInfoPositionDJRightText, rc_show_enab
 MACRO_CONFIG_INT(RcAutoChangeSkin, rc_auto_change_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcShowSpectatorSkin, rc_show_spectator_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcShowAllPlayers, rc_show_all_players, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+
+MACRO_CONFIG_STR(RcAiBaseUrl, rc_ai_base_url, 256, "https://api.openai.com/v1", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_STR(RcAiModel, rc_ai_model, 128, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_STR(RcAiToken, rc_ai_token, 256, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAiAutoReply, rc_ai_auto_reply, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
