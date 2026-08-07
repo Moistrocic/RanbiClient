@@ -96,6 +96,7 @@ void CAiClient::SendRequest(const char *pText, int Dummy, int Team)
 	char aToken[512];
 	str_format(aToken, sizeof(aToken), "Bearer %s", g_Config.m_RcAiToken);
 
+	dbg_msg("ranbi_ai", "send request: url=%s model=%s", aUrl, g_Config.m_RcAiModel);
 	m_pRequest = HttpPostJson(aUrl, aBody);
 	m_pRequest->HeaderString("Authorization", aToken);
 	m_pRequest->Timeout(CTimeout{10000, 60000, 500, 5});
@@ -109,17 +110,20 @@ void CAiClient::HandleResponse()
 {
 	if(m_pRequest->State() != EHttpState::DONE)
 	{
+		dbg_msg("ranbi_ai", "response: state=%d (not DONE, dropped)", (int)m_pRequest->State());
 		m_pRequest = nullptr;
 		return;
 	}
 	if(m_pRequest->StatusCode() < 200 || m_pRequest->StatusCode() >= 300)
 	{
+		dbg_msg("ranbi_ai", "response: http status=%d (dropped)", m_pRequest->StatusCode());
 		m_pRequest = nullptr;
 		return;
 	}
 	json_value *pObj = m_pRequest->ResultJson();
 	if(!pObj)
 	{
+		dbg_msg("ranbi_ai", "response: invalid json (dropped)");
 		m_pRequest = nullptr;
 		return;
 	}
@@ -133,10 +137,15 @@ void CAiClient::HandleResponse()
 		char aReply[512];
 		str_copy(aReply, pReply, sizeof(aReply));
 		TruncateReply(aReply, sizeof(aReply));
+		dbg_msg("ranbi_ai", "response: reply=\"%s\" (dummy=%d team=%d)", aReply, m_ReplyDummy, m_ReplyTeam);
 		CNetMsg_Cl_Say Msg;
 		Msg.m_Team = m_ReplyTeam;
 		Msg.m_pMessage = aReply;
 		Client()->SendPackMsg(m_ReplyDummy, &Msg, MSGFLAG_VITAL);
+	}
+	else
+	{
+		dbg_msg("ranbi_ai", "response: no content in choices[0].message (dropped)");
 	}
 	json_value_free(pObj);
 	m_pRequest = nullptr;
@@ -145,22 +154,44 @@ void CAiClient::HandleResponse()
 void CAiClient::OnMessage(int MsgType, void *pRawMsg)
 {
 	// RANBICLIENT m_RcAiAutoReply
-	if(MsgType != NETMSGTYPE_SV_CHAT || !g_Config.m_RcAiAutoReply)
+	if(MsgType != NETMSGTYPE_SV_CHAT)
 		return;
 	CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-	if(pMsg->m_ClientId < 0)
+	dbg_msg("ranbi_ai", "chat: client=%d team=%d auto_reply=%d msg=\"%s\"", pMsg->m_ClientId, pMsg->m_Team, g_Config.m_RcAiAutoReply, pMsg->m_pMessage);
+	if(!g_Config.m_RcAiAutoReply)
+	{
+		dbg_msg("ranbi_ai", "  skip: auto reply disabled");
 		return;
+	}
+	if(pMsg->m_ClientId < 0)
+	{
+		dbg_msg("ranbi_ai", "  skip: server message");
+		return;
+	}
 	if(pMsg->m_ClientId == GameClient()->m_aLocalIds[0] || (Client()->DummyConnected() && pMsg->m_ClientId == GameClient()->m_aLocalIds[1]))
-		return; // 自己的消息不触发
+	{
+		dbg_msg("ranbi_ai", "  skip: own message");
+		return;
+	}
 
 	int Dummy;
 	const char *pText;
 	if(!ParseMention(pMsg->m_pMessage, Dummy, &pText))
+	{
+		dbg_msg("ranbi_ai", "  skip: not a mention (expected \"name: myname: text\")");
 		return;
+	}
+	dbg_msg("ranbi_ai", "  mention matched: dummy=%d text=\"%s\"", Dummy, pText);
 	if(time_get() < m_aNextReplyTime[Dummy])
+	{
+		dbg_msg("ranbi_ai", "  skip: throttled, %d s remaining", (int)((m_aNextReplyTime[Dummy] - time_get()) / time_freq()));
 		return;
+	}
 	if(m_pRequest)
+	{
+		dbg_msg("ranbi_ai", "  skip: request already in flight");
 		return;
+	}
 
 	SendRequest(pText, Dummy, pMsg->m_Team < 0 ? 0 : pMsg->m_Team);
 }
