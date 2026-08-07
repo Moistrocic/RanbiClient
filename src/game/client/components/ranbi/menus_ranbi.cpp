@@ -16,7 +16,8 @@ static constexpr int RANBI_TAB_SETTINGS = 0;
 static constexpr int RANBI_TAB_WEAPONS_SETTINGS = 1;
 static constexpr int RANBI_TAB_DDNET_MORE = 2;
 static constexpr int RANBI_TAB_INFO = 3;
-static constexpr int NUMBER_OF_RANBI_TABS = 4;
+static constexpr int RANBI_TAB_AI = 4;
+static constexpr int NUMBER_OF_RANBI_TABS = 5;
 
 static const float s_FontSize = 14.0f;
 static const float s_EditBoxFontSize = 12.0f;
@@ -655,6 +656,84 @@ void CMenus::RenderRanbiInfo(CUIRect MainView)
 	s_ScrollRegion.End();
 }
 
+void CMenus::RenderRanbiAI(CUIRect MainView)
+{
+	CUIRect Column, Button, Label;
+
+	static CScrollRegion s_ScrollRegion;
+	vec2 ScrollOffset(0.0f, 0.0f);
+	CScrollRegionParams ScrollParams;
+	ScrollParams.m_ScrollUnit = 60.0f;
+	ScrollParams.m_Flags = CScrollRegionParams::FLAG_CONTENT_STATIC_WIDTH;
+	ScrollParams.m_ScrollbarMargin = 5.0f;
+	s_ScrollRegion.Begin(&MainView, &ScrollOffset, &ScrollParams);
+
+	static std::vector<CUIRect> s_SectionBoxes;
+	static vec2 s_PrevScrollOffset(0.0f, 0.0f);
+
+	MainView.y += ScrollOffset.y;
+
+	MainView.VSplitRight(5.0f, &MainView, nullptr);
+	MainView.VSplitLeft(5.0f, nullptr, &MainView);
+
+	for(CUIRect &Section : s_SectionBoxes)
+	{
+		float Padding = s_MarginBetweenViews * 0.6666f;
+		Section.w += Padding;
+		Section.h += Padding;
+		Section.x -= Padding * 0.5f;
+		Section.y -= Padding * 0.5f;
+		Section.y -= s_PrevScrollOffset.y - ScrollOffset.y;
+		Section.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f), IGraphics::CORNER_ALL, 10.0f);
+	}
+	s_PrevScrollOffset = ScrollOffset;
+	s_SectionBoxes.clear();
+
+	Column = MainView;
+	Column.VSplitLeft(s_MarginSmall, nullptr, &Column);
+	Column.VSplitRight(s_MarginSmall, &Column, nullptr);
+
+	// Basic Settings
+	Column.HSplitTop(s_Margin, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, RCLocalize("Basic Settings"), s_HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
+
+	CLineInput s_BaseUrlInput(g_Config.m_RcAiBaseUrl, sizeof(g_Config.m_RcAiBaseUrl));
+	CLineInput s_ModelInput(g_Config.m_RcAiModel, sizeof(g_Config.m_RcAiModel));
+	CLineInput s_TokenInput(g_Config.m_RcAiToken, sizeof(g_Config.m_RcAiToken));
+
+	const char *apLabels[3] = {RCLocalize("Base url"), RCLocalize("Model"), RCLocalize("Token")};
+	CLineInput *apInputs[3] = {&s_BaseUrlInput, &s_ModelInput, &s_TokenInput};
+	for(int i = 0; i < 3; i++)
+	{
+		Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+		Button.VSplitMid(&Label, &Button);
+		Ui()->DoLabel(&Label, apLabels[i], s_FontSize, TEXTALIGN_ML);
+		Ui()->DoEditBox(apInputs[i], &Button, s_EditBoxFontSize);
+	}
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
+	// Other
+	Column.HSplitTop(s_MarginBetweenSections, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, RCLocalize("Other"), s_HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAiAutoReply, RCLocalize("Auto AI reply"), &g_Config.m_RcAiAutoReply, &Column, s_LineSize);
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
+	CUIRect ScrollRegion;
+	ScrollRegion.x = MainView.x;
+	ScrollRegion.y = Column.y + s_MarginSmall * 2.0f;
+	ScrollRegion.w = MainView.w;
+	ScrollRegion.h = 0.0f;
+	s_ScrollRegion.AddRect(ScrollRegion);
+	s_ScrollRegion.End();
+}
+
 void CMenus::RenderRanbi(CUIRect MainView)
 {
 	static int s_CurTab = 0;
@@ -667,11 +746,12 @@ void CMenus::RenderRanbi(CUIRect MainView)
 
 	const float TabWidth = TabBar.w / NUMBER_OF_RANBI_TABS;
 	static CButtonContainer s_aPageTabs[NUMBER_OF_RANBI_TABS] = {};
-	const char *apTabNames[] = {
+	const char *apTabNames[NUMBER_OF_RANBI_TABS] = {
 		RCLocalize("Settings"),
 		RCLocalize("Weapons Settings"),
 		RCLocalize("More DDNet"),
-		RCLocalize("Info")};
+		RCLocalize("Info"),
+		RCLocalize("AI Settings")};
 
 	for(int Tab = 0; Tab < NUMBER_OF_RANBI_TABS; ++Tab)
 	{
@@ -692,4 +772,6 @@ void CMenus::RenderRanbi(CUIRect MainView)
 		RenderRanbiDDNetMore(MainView);
 	else if(s_CurTab == RANBI_TAB_INFO)
 		RenderRanbiInfo(MainView);
+	else if(s_CurTab == RANBI_TAB_AI)
+		RenderRanbiAI(MainView);
 }

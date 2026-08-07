@@ -260,3 +260,23 @@ Weapons angle outer radius
 
 Weapons angle font size
 == 武器角度字体尺寸
+AI Settings
+== AI设置
+
+Basic Settings
+== 基本设置
+
+Base url
+== Base url
+
+Model
+== 模型
+
+Token
+== Token
+
+Other
+== 其他
+
+Auto AI reply
+== 自动 AI 回复
