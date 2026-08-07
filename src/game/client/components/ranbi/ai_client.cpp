@@ -35,6 +35,8 @@ bool CAiClient::ParseMention(const char *pText, int &Dummy, const char **ppText)
 
 	for(int D = 0; D < NUM_DUMMIES; D++)
 	{
+		if(D == 1 && !Client()->DummyConnected())
+			continue;
 		const int LocalId = GameClient()->m_aLocalIds[D];
 		if(LocalId < 0 || LocalId >= MAX_CLIENTS)
 			continue;
@@ -148,7 +150,7 @@ void CAiClient::OnMessage(int MsgType, void *pRawMsg)
 	CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
 	if(pMsg->m_ClientId < 0)
 		return;
-	if(pMsg->m_ClientId == GameClient()->m_aLocalIds[0] || pMsg->m_ClientId == GameClient()->m_aLocalIds[1])
+	if(pMsg->m_ClientId == GameClient()->m_aLocalIds[0] || (Client()->DummyConnected() && pMsg->m_ClientId == GameClient()->m_aLocalIds[1]))
 		return; // 自己的消息不触发
 
 	int Dummy;
