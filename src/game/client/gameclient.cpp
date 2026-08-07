@@ -119,6 +119,7 @@ void CGameClient::OnConsoleInit()
 	m_vpAll.insert(m_vpAll.end(), {&m_RenderProxy, // RanbiClient
 					      &m_Points, // RanbiClient
 					      &m_RanbiClient, // RanbiClient
+					      &m_AiClient, // RanbiClient
 					      &m_Skins,
 					      &m_Skins7,
 					      &m_CountryFlags,
