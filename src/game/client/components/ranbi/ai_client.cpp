@@ -23,16 +23,9 @@ void CAiClient::OnReset()
 	m_ReplyTeam = 0;
 }
 
-// 严格三段式解析：名字1: 名字2: 文本；名字2 == 本体名或分身名（区分大小写）
+// 解析被 @ 消息：一段式 "我的名字: 内容" 或三段式 "名字1: 我的名字: 内容"；名字区分大小写
 bool CAiClient::ParseMention(const char *pText, int &Dummy, const char **ppText)
 {
-	const char *pColon1 = str_find(pText, ": ");
-	if(!pColon1)
-		return false;
-	const char *pColon2 = str_find(pColon1 + 2, ": ");
-	if(!pColon2)
-		return false;
-
 	for(int D = 0; D < NUM_DUMMIES; D++)
 	{
 		if(D == 1 && !Client()->DummyConnected())
@@ -41,12 +34,31 @@ bool CAiClient::ParseMention(const char *pText, int &Dummy, const char **ppText)
 		if(LocalId < 0 || LocalId >= MAX_CLIENTS)
 			continue;
 		const char *pName = GameClient()->m_aClients[LocalId].m_aName;
-		const int NameLen = pColon2 - (pColon1 + 2);
-		if((int)str_length(pName) == NameLen && str_comp_num(pColon1 + 2, pName, NameLen) == 0)
+		const int NameLen = str_length(pName);
+
+		// 一段式：消息以 "我的名字: " 开头
+		if(str_comp_num(pText, pName, NameLen) == 0 && pText[NameLen] == ':' && pText[NameLen + 1] == ' ')
 		{
 			Dummy = D;
-			*ppText = pColon2 + 2;
+			*ppText = pText + NameLen + 2;
 			return true;
+		}
+
+		// 三段式兼容：消息含 "名字1: 我的名字: "
+		const char *pColon1 = str_find(pText, ": ");
+		if(pColon1)
+		{
+			const char *pColon2 = str_find(pColon1 + 2, ": ");
+			if(pColon2)
+			{
+				const int SegmentLen = pColon2 - (pColon1 + 2);
+				if(SegmentLen == NameLen && str_comp_num(pColon1 + 2, pName, NameLen) == 0)
+				{
+					Dummy = D;
+					*ppText = pColon2 + 2;
+					return true;
+				}
+			}
 		}
 	}
 	return false;
@@ -178,7 +190,7 @@ void CAiClient::OnMessage(int MsgType, void *pRawMsg)
 	const char *pText;
 	if(!ParseMention(pMsg->m_pMessage, Dummy, &pText))
 	{
-		dbg_msg("ranbi_ai", "  skip: not a mention (expected \"name: myname: text\")");
+		dbg_msg("ranbi_ai", "  skip: not a mention (expected \"myname: text\" or \"name: myname: text\")");
 		return;
 	}
 	dbg_msg("ranbi_ai", "  mention matched: dummy=%d text=\"%s\"", Dummy, pText);
