@@ -98,11 +98,12 @@ void CAiClient::SendRequest(const char *pText, int Dummy, int Team)
 	char aText[1024];
 	EscapeJson(aModel, sizeof(aModel), g_Config.m_RcAiModel);
 	EscapeJson(aText, sizeof(aText), pText);
-	const char *pSystem = "You are an in-game chat assistant. Reply as briefly as possible. Keep every reply within 80 Chinese characters or 128 English letters (including punctuation); longer replies get truncated.";
+	char aSystem[1024];
+	EscapeJson(aSystem, sizeof(aSystem), "你是DDNet这款游戏的玩家，你需要回复其他玩家跟你的谈话，且谈话可能为空，可能仅是打招呼。每次回复长度保证在80汉字或128字母内，过长的回复会被截断");
 	char aBody[4096];
 	str_format(aBody, sizeof(aBody),
 		"{\"model\":\"%s\",\"messages\":[{\"role\":\"system\",\"content\":\"%s\"},{\"role\":\"user\",\"content\":\"%s\"}]}",
-		aModel, pSystem, aText);
+		aModel, aSystem, aText);
 
 	const int UrlLen = str_length(g_Config.m_RcAiBaseUrl);
 	char aUrl[512];
