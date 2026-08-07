@@ -36,12 +36,18 @@ bool CAiClient::ParseMention(const char *pText, int &Dummy, const char **ppText)
 		const char *pName = GameClient()->m_aClients[LocalId].m_aName;
 		const int NameLen = str_length(pName);
 
-		// 一段式：消息以 "我的名字: " 开头
-		if(str_comp_num(pText, pName, NameLen) == 0 && pText[NameLen] == ':' && pText[NameLen + 1] == ' ')
+		// 一段式：消息以 "我的名字:" 或 "我的名字: " 开头（空文本 @ 无尾随空格）
+		if(str_comp_num(pText, pName, NameLen) == 0 && pText[NameLen] == ':')
 		{
-			Dummy = D;
-			*ppText = pText + NameLen + 2;
-			return true;
+			const char *pAfter = pText + NameLen + 1;
+			if(pAfter[0] == '\0' || pAfter[0] == ' ')
+			{
+				if(pAfter[0] == ' ')
+					pAfter++;
+				Dummy = D;
+				*ppText = pAfter;
+				return true;
+			}
 		}
 
 		// 三段式兼容：消息含 "名字1: 我的名字: "
