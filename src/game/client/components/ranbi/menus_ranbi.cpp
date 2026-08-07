@@ -700,9 +700,9 @@ void CMenus::RenderRanbiAI(CUIRect MainView)
 	Ui()->DoLabel(&Label, RCLocalize("Basic Settings"), s_HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
-	CLineInput s_BaseUrlInput(g_Config.m_RcAiBaseUrl, sizeof(g_Config.m_RcAiBaseUrl));
-	CLineInput s_ModelInput(g_Config.m_RcAiModel, sizeof(g_Config.m_RcAiModel));
-	CLineInput s_TokenInput(g_Config.m_RcAiToken, sizeof(g_Config.m_RcAiToken));
+	static CLineInput s_BaseUrlInput(g_Config.m_RcAiBaseUrl, sizeof(g_Config.m_RcAiBaseUrl));
+	static CLineInput s_ModelInput(g_Config.m_RcAiModel, sizeof(g_Config.m_RcAiModel));
+	static CLineInput s_TokenInput(g_Config.m_RcAiToken, sizeof(g_Config.m_RcAiToken));
 
 	const char *apLabels[3] = {RCLocalize("Base url"), RCLocalize("Model"), RCLocalize("Token")};
 	CLineInput *apInputs[3] = {&s_BaseUrlInput, &s_ModelInput, &s_TokenInput};
