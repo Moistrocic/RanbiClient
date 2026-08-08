@@ -138,6 +138,14 @@ int CAiClient::LoadKnowledge(const char *pQuestion, char *aKbBuf, int KbBufSize)
 			break;
 		char aPath[512];
 		str_format(aPath, sizeof(aPath), "ranbi/knowledge/%s", FileName.c_str());
+		// 单文件上限 4KB，超限跳过（避免主线程读取大文件卡顿）
+		IOHANDLE File = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_ALL);
+		if(!File)
+			continue;
+		const int64_t FileSize = io_length(File);
+		io_close(File);
+		if(FileSize > 4096)
+			continue;
 		char *pContent = Storage()->ReadFileStr(aPath, IStorage::TYPE_ALL);
 		if(!pContent)
 			continue;
