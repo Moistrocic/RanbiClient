@@ -12,8 +12,21 @@
 CRanbiClient::CRanbiClient()
 {
 	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+	{
 		m_aLastSkinChangeTick[Dummy] = 0;
+		m_aAttackNextPressTime[Dummy] = 0;
+		m_aAttackPressEndTime[Dummy] = 0;
+	}
 	OnReset();
+}
+
+void CRanbiClient::OnReset()
+{
+	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+	{
+		m_aAttackNextPressTime[Dummy] = 0;
+		m_aAttackPressEndTime[Dummy] = 0;
+	}
 }
 
 void CRanbiClient::OnConsoleInit()
@@ -27,6 +40,44 @@ void CRanbiClient::OnConsoleInit()
 
 void CRanbiClient::OnUpdate()
 {
+	// RANBICLIENT m_RcAutoAttack
+	if(g_Config.m_RcAutoAttack)
+	{
+		const int Dummy = g_Config.m_ClDummy;
+		const int LocalId = GameClient()->m_aLocalIds[Dummy];
+		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active &&
+			!GameClient()->m_Snap.m_SpecInfo.m_Active)
+		{
+			const int64_t Now = time_get();
+			if(m_aAttackNextPressTime[Dummy] == 0)
+			{
+				m_aAttackNextPressTime[Dummy] = Now;
+				m_aAttackPressEndTime[Dummy] = 0;
+			}
+			if(Now >= m_aAttackPressEndTime[Dummy])
+				GameClient()->m_Controls.m_aInputData[Dummy].m_Fire = 0;
+			if(Now >= m_aAttackNextPressTime[Dummy])
+			{
+				GameClient()->m_Controls.m_aInputData[Dummy].m_Fire = 1;
+				m_aAttackNextPressTime[Dummy] = Now + time_freq() * g_Config.m_RcAutoAttackInterval / 1000;
+				m_aAttackPressEndTime[Dummy] = Now + time_freq() * 40 / 1000;
+			}
+		}
+		else
+		{
+			m_aAttackNextPressTime[Dummy] = 0;
+			m_aAttackPressEndTime[Dummy] = 0;
+		}
+	}
+	else
+	{
+		for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+		{
+			m_aAttackNextPressTime[Dummy] = 0;
+			m_aAttackPressEndTime[Dummy] = 0;
+		}
+	}
+
 	// RANBICLIENT m_RcAutoChangeSkin
 	if(g_Config.m_RcAutoChangeSkin)
 	{

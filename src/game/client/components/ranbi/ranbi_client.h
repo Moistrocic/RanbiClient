@@ -50,6 +50,7 @@ public:
 
 	void OnConsoleInit() override;
 	void OnUpdate() override;
+	void OnReset() override;
 
 	SCollisionSkinInfo m_LastCollisionSkin;
 
@@ -57,6 +58,8 @@ public:
 
 private:
 	int m_aLastSkinChangeTick[NUM_DUMMIES];
+	int64_t m_aAttackNextPressTime[NUM_DUMMIES];
+	int64_t m_aAttackPressEndTime[NUM_DUMMIES];
 	static void ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData);
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 };
