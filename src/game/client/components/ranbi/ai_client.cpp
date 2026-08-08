@@ -10,6 +10,26 @@
 #include <game/client/gameclient.h>
 #include <game/gamecore.h>
 
+// 默认知识库内容（总结自 DDNet 中文 wiki：https://wiki.ddnet.org/wiki/Main_Page/zh），首次启动时写入用户配置目录
+static const char s_aDefaultKnowledge[] =
+	"DDNet（DDraceNetwork）是一款免费开源的横向卷轴平台游戏，由Teeworlds的DDRace模组发展而来，核心是独特的合作玩法，支持最多64名玩家一起通关。官方服务器遍布全球，可在官网ddnet.org或Steam（搜索DDraceNetwork）免费下载。\n"
+	"\n"
+	"【入门】玩家角色叫Tee（毛球/猫球/小人）。基本操作：A/D左右移动，Space跳跃，鼠标左键使用武器，鼠标右键使用钩索，Shift打开表情菜单。默认武器为锤子（可击打解冻他人）和手枪，地图中可收集霰弹枪、榴弹枪、激光枪、武士刀。建议先完成教学服务器，再从简单（Novice）地图开始。\n"
+	"\n"
+	"【机制】冻结区域会冻结Tee，被其他Tee锤击可解冻；常见地图元素有传送器、加速带、开关层、阻挡器、喷气背包（手枪的特殊能力）、分身Dummy（第二个角色）。常用技巧：锤子飞hf、锤击hh、榴弹飞rf、钩飞、二段跳dj、边缘跳。\n"
+	"\n"
+	"【模式与难度】主要模式是DDRace合作通关，另有竞速Race、阻碍Block、冻结与捕获FNG、原版Vanilla、感染Infection等。地图类型：简单Novice、中阶Moderate、高阶Brutal、疯狂Insane、传统Oldschool、古典DDmaX、单人Solo、娱乐Fun（无分数），星级越多越难（0-5星）。\n"
+	"\n"
+	"【积分排名】在官方服务器完成地图即可获得积分与排名，分数=星级×倍数+初始值。默认队伍（team 0）完成得个人排名，/team加入队伍后完成得团队排名。/rank查看当前地图排名，/points查看总分，同一张地图的全球分数只算一次。\n"
+	"\n"
+	"【常用指令】/team 数字 加入队伍，/lock 锁定队伍，/invite 邀请，/save 存档，/load 密码 读档，/map 地图名 换图。和朋友玩：进空服后输入/team同一数字并/lock。\n"
+	"\n"
+	"【外观】设置-玩家标签改名称/战队/旗帜，Tee标签改皮肤外观，皮肤可到ddnet.org/skins或skins.tw下载更多。官方会定期举办锦标赛（Tournament），2人组队争夺新图最佳成绩。\n"
+	"\n"
+	"【常见问题】配置目录：Windows为%appdata%\\DDNet，Linux为~/.local/share/ddnet，macOS为~/Library/Application Support/DDNet，配置文件settings_ddnet.cfg。服务器列表刷不出来可看ddnet.org/status，或直接输IP连接，如chn0.ddnet.org:8308（端口8300是教学服）。\n"
+	"\n"
+	"【术语】b=请求返回救援，re=重开，rq=怒退，flw=跟随，r1=第一名，t0=默认队伍，hj/hh=锤击解冻；阻碍者Blocker指故意让其他玩家失败的玩家。\n";
+
 CAiClient::CAiClient()
 {
 	OnReset();
@@ -26,6 +46,28 @@ void CAiClient::OnReset()
 	m_aPendingSpeaker[0] = '\0';
 	m_aPendingText[0] = '\0';
 	m_Context.clear();
+}
+
+void CAiClient::OnInit()
+{
+	// RANBICLIENT 初始化知识库文件夹，首次启动写入默认知识库（已存在则不覆盖）
+	Storage()->CreateFolder("ranbi", IStorage::TYPE_SAVE);
+	Storage()->CreateFolder("ranbi/knowledge", IStorage::TYPE_SAVE);
+
+	const char *pPath = "ranbi/knowledge/ddnet_wiki.txt";
+	IOHANDLE ReadHandle = Storage()->OpenFile(pPath, IOFLAG_READ, IStorage::TYPE_ALL);
+	if(ReadHandle)
+	{
+		io_close(ReadHandle);
+		return;
+	}
+	IOHANDLE WriteHandle = Storage()->OpenFile(pPath, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(!WriteHandle)
+		return;
+	const int KnowledgeLen = str_length(s_aDefaultKnowledge);
+	if(io_write(WriteHandle, s_aDefaultKnowledge, KnowledgeLen) != (unsigned)KnowledgeLen)
+		Storage()->RemoveFile(pPath, IStorage::TYPE_SAVE);
+	io_close(WriteHandle);
 }
 
 static bool IsWordChar(char c)
@@ -96,7 +138,7 @@ static int KnowledgeListCallback(const char *pName, int IsDir, int Type, void *p
 	return 0;
 }
 
-// 命中规则：提问包含文件名（去 .txt，不区分大小写），或提问任一连续4字符片段出现在内容中
+// 命中规则：提问包含文件名（去 .txt，不区分大小写）、提问中的字母数字单词在内容中独立出现，或提问任一连续4字符片段出现在内容中
 static bool KnowledgeHit(const char *pQuestion, const char *pFileName, const char *pContent)
 {
 	char aName[128];
@@ -107,20 +149,58 @@ static bool KnowledgeHit(const char *pQuestion, const char *pFileName, const cha
 	if(str_find_nocase(pQuestion, aName))
 		return true;
 
+	// 提问中的字母数字单词（长度≥2）作为独立词出现在内容中即命中
 	const char *p = pQuestion;
 	while(*p)
 	{
-		const char *pEnd = p;
+		if(IsWordChar(*p))
+		{
+			const char *pWord = p;
+			while(IsWordChar(*p))
+				++p;
+			const int WordLen = (int)(p - pWord);
+			if(WordLen >= 2 && WordLen < 64)
+			{
+				char aWord[64];
+				str_copy(aWord, pWord, WordLen + 1);
+				const char *pFound = pContent;
+				while((pFound = str_find_nocase(pFound, aWord)) != nullptr)
+				{
+					const bool LeftOk = pFound == pContent || !IsWordChar(pFound[-1]);
+					const bool RightOk = !IsWordChar(pFound[WordLen]);
+					if(LeftOk && RightOk)
+						return true;
+					pFound += WordLen;
+				}
+			}
+		}
+		else
+		{
+			const char *pNext = p;
+			if(str_utf8_decode(&pNext) == -1)
+				break;
+			p = pNext;
+		}
+	}
+
+	// 提问任一连续4字符片段出现在内容中
+	const char *p2 = pQuestion;
+	while(*p2)
+	{
+		const char *pEnd = p2;
 		int Chars = 0;
 		for(; Chars < 4 && *pEnd; Chars++)
 			str_utf8_decode(&pEnd);
 		if(Chars < 4)
 			break;
 		char aFragment[20];
-		str_copy(aFragment, p, (int)(pEnd - p) + 1);
+		str_copy(aFragment, p2, (int)(pEnd - p2) + 1);
 		if(str_find(pContent, aFragment))
 			return true;
-		str_utf8_decode(&p);
+		const char *pNext = p2;
+		if(str_utf8_decode(&pNext) == -1)
+			break;
+		p2 = pNext;
 	}
 	return false;
 }
