@@ -22,6 +22,8 @@ void CRanbiClient::OnReset()
 		m_aAttackNextPressTime[Dummy] = 0;
 		m_aAttackPressEndTime[Dummy] = 0;
 	}
+
+	m_BuyBaitNextCheckTime = 0;
 }
 
 void CRanbiClient::OnConsoleInit()
@@ -175,6 +177,40 @@ void CRanbiClient::OnUpdate()
 			}
 			return;
 		}
+	}
+
+	// RANBICLIENT m_RcAutoBuyBait
+	if(g_Config.m_RcAutoBuyBait)
+	{
+		const int Dummy = g_Config.m_ClDummy;
+		const int LocalId = GameClient()->m_aLocalIds[Dummy];
+		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active)
+		{
+			const int64_t Now = time_get();
+			if(m_BuyBaitNextCheckTime == 0)
+				m_BuyBaitNextCheckTime = Now;
+			if(Now >= m_BuyBaitNextCheckTime)
+			{
+				int OptionId = 0;
+				for(const CVoteOptionClient *pOption = GameClient()->m_Voting.FirstOption(); pOption; pOption = pOption->m_pNext, OptionId++)
+				{
+					if(str_find_nocase(pOption->m_aDescription, "购买鱼饵"))
+					{
+						GameClient()->m_Voting.CallvoteOption(OptionId, "", false);
+						break;
+					}
+				}
+				m_BuyBaitNextCheckTime = Now + time_freq() * g_Config.m_RcAutoBuyBaitInterval;
+			}
+		}
+		else
+		{
+			m_BuyBaitNextCheckTime = 0;
+		}
+	}
+	else
+	{
+		m_BuyBaitNextCheckTime = 0;
 	}
 }
 
