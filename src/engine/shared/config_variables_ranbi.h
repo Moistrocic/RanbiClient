@@ -69,3 +69,7 @@ MACRO_CONFIG_STR(RcAiBaseUrl, rc_ai_base_url, 256, "https://api.openai.com/v1", 
 MACRO_CONFIG_STR(RcAiModel, rc_ai_model, 128, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_STR(RcAiToken, rc_ai_token, 256, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcAiAutoReply, rc_ai_auto_reply, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+
+MACRO_CONFIG_INT(RcAiReplyInterval, rc_ai_reply_interval, 2, 1, 60, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAiTemperature, rc_ai_temperature, 10, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAiContextCount, rc_ai_context_count, 5, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
