@@ -247,6 +247,20 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcTalkingHidden, RCLocalize("Talking hidden"), &g_Config.m_RcTalkingHidden, &Column, s_LineSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
+	// Auto attack
+	Column.HSplitTop(s_MarginBetweenSections, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, RCLocalize("Auto attack"), s_HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAutoAttack, RCLocalize("Auto attack"), &g_Config.m_RcAutoAttack, &Column, s_LineSize);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAutoAttackInterval, &g_Config.m_RcAutoAttackInterval, &Button, RCLocalize("Attack interval (ms)"), 50, 1000);
+
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
 	RightView = Column;
 
 	CUIRect ScrollRegion;
@@ -643,20 +657,6 @@ void CMenus::RenderRanbiInfo(CUIRect MainView)
 	Column.HSplitTop(s_LineSize, &Button, &Column);
 	if(DoButton_Menu(&s_GithubButton, "GitHub", 0, &Button))
 		Client()->ViewLink("https://github.com/Moistrocic/RanbiClient");
-	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
-
-	// Auto attack
-	Column.HSplitTop(s_MarginBetweenSections, nullptr, &Column);
-	s_SectionBoxes.push_back(Column);
-	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
-	Ui()->DoLabel(&Label, RCLocalize("Auto attack"), s_HeadlineFontSize, TEXTALIGN_ML);
-	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
-
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAutoAttack, RCLocalize("Auto attack"), &g_Config.m_RcAutoAttack, &Column, s_LineSize);
-
-	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
-	Ui()->DoScrollbarOption(&g_Config.m_RcAutoAttackInterval, &g_Config.m_RcAutoAttackInterval, &Button, RCLocalize("Attack interval (ms)"), 50, 1000);
-
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	RightView = Column;
