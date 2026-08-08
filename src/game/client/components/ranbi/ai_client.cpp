@@ -178,8 +178,10 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 	char aModel[512];
 	EscapeJson(aModel, sizeof(aModel), g_Config.m_RcAiModel);
 
+	// RANBICLIENT m_RcAiSystemPrompt
 	char aSystem[9000];
-	str_copy(aSystem, "你是DDNet这款游戏的玩家，你需要回复其他玩家跟你的谈话，且谈话可能为空，可能仅是打招呼。每次回复长度保证在80汉字或128字母内，过长的回复会被截断", sizeof(aSystem));
+	const char *pPrompt = g_Config.m_RcAiSystemPrompt[0] != '\0' ? g_Config.m_RcAiSystemPrompt : "你是DDNet这款游戏的玩家，你需要回复其他玩家跟你的谈话，且谈话可能为空，可能仅是打招呼。每次回复长度保证在80汉字或128字母内，过长的回复会被截断";
+	str_copy(aSystem, pPrompt, sizeof(aSystem));
 	int SystemLen = str_length(aSystem);
 	m_KnowledgeHit = false;
 	SystemLen += LoadKnowledge(pText, aSystem + SystemLen, sizeof(aSystem) - SystemLen);
