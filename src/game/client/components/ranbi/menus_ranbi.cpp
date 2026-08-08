@@ -247,7 +247,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcTalkingHidden, RCLocalize("Talking hidden"), &g_Config.m_RcTalkingHidden, &Column, s_LineSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
-	// Auto attack
+	// Auto fish
 	Column.HSplitTop(s_MarginBetweenSections, nullptr, &Column);
 	s_SectionBoxes.push_back(Column);
 	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
