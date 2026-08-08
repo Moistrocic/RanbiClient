@@ -21,6 +21,7 @@ void CRanbiClient::OnReset()
 		m_aLastSkinChangeTick[Dummy] = 0;
 		m_aAttackNextPressTime[Dummy] = 0;
 		m_aAttackPressEndTime[Dummy] = 0;
+		m_aAttackFireInjected[Dummy] = false;
 	}
 
 	m_BuyBaitNextCheckTime = 0;
@@ -52,21 +53,26 @@ void CRanbiClient::OnUpdate()
 				m_aAttackPressEndTime[Dummy] = 0;
 			}
 			if(Now >= m_aAttackPressEndTime[Dummy])
+			{
 				GameClient()->m_Controls.m_aInputData[Dummy].m_Fire = 0;
+				m_aAttackFireInjected[Dummy] = false;
+			}
 			if(Now >= m_aAttackNextPressTime[Dummy])
 			{
 				GameClient()->m_Controls.m_aInputData[Dummy].m_Fire = 1;
+				m_aAttackFireInjected[Dummy] = true;
 				m_aAttackNextPressTime[Dummy] = Now + time_freq() * g_Config.m_RcAutoAttackInterval / 1000;
 				m_aAttackPressEndTime[Dummy] = Now + time_freq() * 40 / 1000;
 			}
 		}
 		else
 		{
-			if(LocalId >= 0 && LocalId < MAX_CLIENTS)
+			if(LocalId >= 0 && LocalId < MAX_CLIENTS && m_aAttackFireInjected[Dummy])
 			{
 				int &Fire = GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
 				if((Fire & 1) != 0)
 					Fire++;
+				m_aAttackFireInjected[Dummy] = false;
 			}
 			m_aAttackNextPressTime[Dummy] = 0;
 			m_aAttackPressEndTime[Dummy] = 0;
@@ -76,11 +82,12 @@ void CRanbiClient::OnUpdate()
 	{
 		const int Dummy = g_Config.m_ClDummy;
 		const int LocalId = GameClient()->m_aLocalIds[Dummy];
-		if(LocalId >= 0 && LocalId < MAX_CLIENTS)
+		if(LocalId >= 0 && LocalId < MAX_CLIENTS && m_aAttackFireInjected[Dummy])
 		{
 			int &Fire = GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
 			if((Fire & 1) != 0)
 				Fire++;
+			m_aAttackFireInjected[Dummy] = false;
 		}
 		m_aAttackNextPressTime[Dummy] = 0;
 		m_aAttackPressEndTime[Dummy] = 0;

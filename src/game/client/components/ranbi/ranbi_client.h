@@ -60,6 +60,7 @@ private:
 	int m_aLastSkinChangeTick[NUM_DUMMIES];
 	int64_t m_aAttackNextPressTime[NUM_DUMMIES];
 	int64_t m_aAttackPressEndTime[NUM_DUMMIES];
+	bool m_aAttackFireInjected[NUM_DUMMIES];
 	int64_t m_BuyBaitNextCheckTime;
 	static void ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData);
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
