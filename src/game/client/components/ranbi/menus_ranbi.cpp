@@ -251,13 +251,18 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Column.HSplitTop(s_MarginBetweenSections, nullptr, &Column);
 	s_SectionBoxes.push_back(Column);
 	Column.HSplitTop(s_HeadlineHeight, &Label, &Column);
-	Ui()->DoLabel(&Label, RCLocalize("Auto attack"), s_HeadlineFontSize, TEXTALIGN_ML);
+	Ui()->DoLabel(&Label, RCLocalize("Auto fish"), s_HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAutoAttack, RCLocalize("Auto attack"), &g_Config.m_RcAutoAttack, &Column, s_LineSize);
 
 	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_RcAutoAttackInterval, &g_Config.m_RcAutoAttackInterval, &Button, RCLocalize("Attack interval (ms)"), 50, 1000);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAutoBuyBait, RCLocalize("Auto buy bait"), &g_Config.m_RcAutoBuyBait, &Column, s_LineSize);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAutoBuyBaitInterval, &g_Config.m_RcAutoBuyBaitInterval, &Button, RCLocalize("Buy bait interval (s)"), 10, 60);
 
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
