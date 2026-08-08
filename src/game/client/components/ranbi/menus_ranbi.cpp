@@ -703,10 +703,11 @@ void CMenus::RenderRanbiAI(CUIRect MainView)
 	static CLineInput s_BaseUrlInput(g_Config.m_RcAiBaseUrl, sizeof(g_Config.m_RcAiBaseUrl));
 	static CLineInput s_ModelInput(g_Config.m_RcAiModel, sizeof(g_Config.m_RcAiModel));
 	static CLineInput s_TokenInput(g_Config.m_RcAiToken, sizeof(g_Config.m_RcAiToken));
+	static CLineInput s_SystemPromptInput(g_Config.m_RcAiSystemPrompt, sizeof(g_Config.m_RcAiSystemPrompt));
 
-	const char *apLabels[3] = {RCLocalize("Base url"), RCLocalize("Model"), RCLocalize("Token")};
-	CLineInput *apInputs[3] = {&s_BaseUrlInput, &s_ModelInput, &s_TokenInput};
-	for(int i = 0; i < 3; i++)
+	const char *apLabels[4] = {RCLocalize("Base url"), RCLocalize("Model"), RCLocalize("Token"), RCLocalize("System prompt")};
+	CLineInput *apInputs[4] = {&s_BaseUrlInput, &s_ModelInput, &s_TokenInput, &s_SystemPromptInput};
+	for(int i = 0; i < 4; i++)
 	{
 		Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
 		Button.VSplitMid(&Label, &Button);

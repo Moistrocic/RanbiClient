@@ -289,3 +289,7 @@ Temperature (x0.1)
 
 Context count
 == 上下文条数
+
+System prompt
+== 系统提示词
+
