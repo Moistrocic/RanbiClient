@@ -241,7 +241,7 @@ void CAiClient::HandleResponse()
 {
 	if(m_pRequest->State() != EHttpState::DONE)
 	{
-		dbg_msg("ranbi_ai", "[AI失败] 请求状态异常(%d)", (int)m_pRequest->State());
+		dbg_msg("ranbi_ai", "[AI失败] 请求异常 state=%d http=%d", (int)m_pRequest->State(), m_pRequest->StatusCode());
 		m_pRequest = nullptr;
 		return;
 	}
