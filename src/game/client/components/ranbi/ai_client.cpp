@@ -263,8 +263,50 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 	const char *pPrompt = g_Config.m_RcAiSystemPrompt[0] != '\0' ? g_Config.m_RcAiSystemPrompt : "你是DDNet这款游戏的玩家，你需要回复其他玩家跟你的谈话，且谈话可能为空，可能仅是打招呼。每次回复长度保证在80汉字或128字母内，过长的回复会被截断";
 	str_copy(aSystem, pPrompt, sizeof(aSystem));
 	int SystemLen = str_length(aSystem);
+
+	// 注入身份信息：告知自己的名字与消息格式，避免回复时用错称呼
+	char aIdentity[768];
+	int IdentityLen = 0;
+	for(int D = 0; D < NUM_DUMMIES; D++)
+	{
+		if(D == 1 && !Client()->DummyConnected())
+			continue;
+		const int LocalId = GameClient()->m_aLocalIds[D];
+		if(LocalId < 0 || LocalId >= MAX_CLIENTS)
+			continue;
+		const char *pName = GameClient()->m_aClients[LocalId].m_aName;
+		if(pName[0] == '\0')
+			continue;
+		const int Len = str_format(aIdentity + IdentityLen, sizeof(aIdentity) - IdentityLen,
+			"\n你的游戏名字是\"%s\"%s", pName, D == Dummy ? "（本次对话以该名字的身份回复）" : "（你的分身名字）");
+		if(Len < 0 || Len >= (int)sizeof(aIdentity) - IdentityLen)
+			break;
+		IdentityLen += Len;
+	}
+	const int RuleLen = str_format(aIdentity + IdentityLen, (int)sizeof(aIdentity) - IdentityLen,
+		"%s", "\n对话消息格式为\"玩家名: 消息内容\"，冒号前是说话玩家的名字。其他玩家提到你的名字就是在跟你说话。不知道的知识先查询知识库，如果知识库没有则回答不知道。");
+	if(RuleLen >= 0 && RuleLen < (int)sizeof(aIdentity) - IdentityLen)
+		IdentityLen += RuleLen;
+	if(IdentityLen > 0 && IdentityLen < (int)sizeof(aSystem) - SystemLen - 1)
+	{
+		str_copy(aSystem + SystemLen, aIdentity, sizeof(aSystem) - SystemLen);
+		SystemLen += IdentityLen;
+	}
+
 	m_KnowledgeHit = false;
 	SystemLen += LoadKnowledge(pText, aSystem + SystemLen, sizeof(aSystem) - SystemLen);
+
+	// 追加当前服务器信息到系统提示词末尾
+	CServerInfo ServerInfo;
+	Client()->GetServerInfo(&ServerInfo);
+	if(ServerInfo.m_aName[0] != '\0')
+	{
+		const int InfoLen = str_format(aSystem + SystemLen, sizeof(aSystem) - SystemLen,
+			"\n当前服务器信息：服务器名称%s，地图%s，游戏模式%s，玩家%d/%d。",
+			ServerInfo.m_aName, ServerInfo.m_aMap, ServerInfo.m_aGameType, ServerInfo.m_NumPlayers, ServerInfo.m_MaxPlayers);
+		if(InfoLen >= 0 && InfoLen < (int)sizeof(aSystem) - SystemLen)
+			SystemLen += InfoLen;
+	}
 
 	char aSystemEsc[36000];
 	EscapeJson(aSystemEsc, sizeof(aSystemEsc), aSystem);
