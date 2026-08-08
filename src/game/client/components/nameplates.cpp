@@ -729,7 +729,8 @@ protected:
 	}
 
 public:
-	CNamePlatePartPoints(CGameClient &This) : CNamePlatePartText(This) {}
+	CNamePlatePartPoints(CGameClient &This) :
+		CNamePlatePartText(This) {}
 };
 
 class CNamePlatePartXPosition : public CNamePlatePartText
@@ -759,7 +760,8 @@ protected:
 	}
 
 public:
-	CNamePlatePartXPosition(CGameClient &This) : CNamePlatePartText(This) {}
+	CNamePlatePartXPosition(CGameClient &This) :
+		CNamePlatePartText(This) {}
 };
 
 class CNamePlatePartRaceState : public CNamePlatePartIcon
@@ -773,7 +775,8 @@ public:
 		float Width = g_Config.m_RcNameplatesShowFinishedSize;
 		m_Size = vec2(Width, Width);
 	}
-	CNamePlatePartRaceState(CGameClient &This) : CNamePlatePartIcon(This)
+	CNamePlatePartRaceState(CGameClient &This) :
+		CNamePlatePartIcon(This)
 	{
 		m_Texture = g_pData->m_aImages[IMAGE_RACEFLAG].m_Id;
 	}
@@ -790,7 +793,8 @@ public:
 		float Width = g_Config.m_RcNameplatesShowDummyCopyStatusSize;
 		m_Size = vec2(Width, Width);
 	}
-	CNamePlatePartDummyCopyState(CGameClient &This) : CNamePlatePartIcon(This)
+	CNamePlatePartDummyCopyState(CGameClient &This) :
+		CNamePlatePartIcon(This)
 	{
 		m_Texture = This.m_HudSkin.m_SpriteHudDummyCopy;
 	}
@@ -807,7 +811,8 @@ public:
 		float Width = g_Config.m_RcNameplatesShowHammerFlyStatusSize;
 		m_Size = vec2(Width, Width);
 	}
-	CNamePlatePartHammerFlyStatus(CGameClient &This) : CNamePlatePartIcon(This)
+	CNamePlatePartHammerFlyStatus(CGameClient &This) :
+		CNamePlatePartIcon(This)
 	{
 		m_Texture = This.m_HudSkin.m_SpriteHudDummyHammer;
 	}
@@ -834,7 +839,8 @@ public:
 		Cursor.m_FontSize = m_FontSize;
 		This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, "↺");
 	}
-	CNamePlatePartDummyResetStatus(CGameClient &This) : CNamePlatePartText(This) {}
+	CNamePlatePartDummyResetStatus(CGameClient &This) :
+		CNamePlatePartText(This) {}
 };
 
 // ***** Name Plates *****
