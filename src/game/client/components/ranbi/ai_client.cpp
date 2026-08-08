@@ -201,7 +201,7 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 
 	char aBody[65536];
 	int BodyLen = str_format(aBody, sizeof(aBody),
-		"{\"model\":\"%s\",\"temperature\":%.1f,\"messages\":[{\"role\":\"system\",\"content\":\"%s\"",
+		"{\"model\":\"%s\",\"temperature\":%.1f,\"messages\":[{\"role\":\"system\",\"content\":\"%s\"}",
 		aModel, g_Config.m_RcAiTemperature / 10.0f, aSystemEsc);
 
 	for(const CContextEntry &Entry : m_Context)
