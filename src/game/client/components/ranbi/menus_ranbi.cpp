@@ -723,6 +723,16 @@ void CMenus::RenderRanbiAI(CUIRect MainView)
 	Column.HSplitTop(s_MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAiAutoReply, RCLocalize("Auto AI reply"), &g_Config.m_RcAiAutoReply, &Column, s_LineSize);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAiReplyInterval, &g_Config.m_RcAiReplyInterval, &Button, RCLocalize("Reply interval (seconds)"), 1, 60);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAiTemperature, &g_Config.m_RcAiTemperature, &Button, RCLocalize("Temperature (x0.1)"), 0, 20);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAiContextCount, &g_Config.m_RcAiContextCount, &Button, RCLocalize("Context count"), 0, 20);
+
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	CUIRect ScrollRegion;

@@ -280,3 +280,12 @@ Other
 
 Auto AI reply
 == 自动 AI 回复
+
+Reply interval (seconds)
+== 回复间隔（秒）
+
+Temperature (x0.1)
+== 温度（×0.1）
+
+Context count
+== 上下文条数
