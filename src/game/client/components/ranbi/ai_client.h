@@ -1,25 +1,40 @@
 #ifndef GAME_CLIENT_COMPONENTS_RANBI_AI_CLIENT_H
 #define GAME_CLIENT_COMPONENTS_RANBI_AI_CLIENT_H
 
+#include <cstdint>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
+
 #include <engine/client/enums.h>
 
 #include <game/client/component.h>
-
-#include <cstdint>
-#include <memory>
 
 class CHttpRequest;
 
 class CAiClient : public CComponent
 {
+	struct CContextEntry
+	{
+		char m_aSpeaker[16];
+		char m_aText[256];
+		bool m_IsReply;
+	};
+
 	int64_t m_aNextReplyTime[NUM_DUMMIES];
 	std::shared_ptr<CHttpRequest> m_pRequest;
 	int m_ReplyDummy;
 	int m_ReplyTeam;
+	std::vector<CContextEntry> m_Context;
+	bool m_KnowledgeHit;
+	char m_aPendingSpeaker[16];
+	char m_aPendingText[256];
 
-	bool ParseMention(const char *pText, int &Dummy, const char **ppText);
+	bool ParseMention(const char *pText, int &Dummy);
 	static void TruncateReply(char *pText, int Size);
-	void SendRequest(const char *pText, int Dummy, int Team);
+	int LoadKnowledge(const char *pQuestion, char *aKbBuf, int KbBufSize);
+	void SendRequest(const char *pText, const char *pSpeaker, int Dummy, int Team);
 	void HandleResponse();
 
 public:

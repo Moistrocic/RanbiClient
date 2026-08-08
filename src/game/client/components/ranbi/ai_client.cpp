@@ -5,6 +5,7 @@
 #include <engine/shared/config.h>
 #include <engine/shared/http.h>
 #include <engine/shared/json.h>
+#include <engine/storage.h>
 
 #include <game/client/gameclient.h>
 #include <game/gamecore.h>
@@ -21,10 +22,19 @@ void CAiClient::OnReset()
 	m_pRequest = nullptr;
 	m_ReplyDummy = 0;
 	m_ReplyTeam = 0;
+	m_KnowledgeHit = false;
+	m_aPendingSpeaker[0] = '\0';
+	m_aPendingText[0] = '\0';
+	m_Context.clear();
 }
 
-// 解析被 @ 消息：一段式 "我的名字: 内容" 或三段式 "名字1: 我的名字: 内容"；名字区分大小写
-bool CAiClient::ParseMention(const char *pText, int &Dummy, const char **ppText)
+static bool IsWordChar(char c)
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+}
+
+// 任意位置出现名字（词边界，区分大小写）即触发
+bool CAiClient::ParseMention(const char *pText, int &Dummy)
 {
 	for(int D = 0; D < NUM_DUMMIES; D++)
 	{
@@ -35,36 +45,20 @@ bool CAiClient::ParseMention(const char *pText, int &Dummy, const char **ppText)
 			continue;
 		const char *pName = GameClient()->m_aClients[LocalId].m_aName;
 		const int NameLen = str_length(pName);
+		if(NameLen == 0)
+			continue;
 
-		// 一段式：消息以 "我的名字:" 或 "我的名字: " 开头（空文本 @ 无尾随空格）
-		if(str_comp_num(pText, pName, NameLen) == 0 && pText[NameLen] == ':')
+		const char *pFound = pText;
+		while((pFound = str_find(pFound, pName)) != nullptr)
 		{
-			const char *pAfter = pText + NameLen + 1;
-			if(pAfter[0] == '\0' || pAfter[0] == ' ')
+			const bool LeftOk = pFound == pText || !IsWordChar(pFound[-1]);
+			const bool RightOk = !IsWordChar(pFound[NameLen]);
+			if(LeftOk && RightOk)
 			{
-				if(pAfter[0] == ' ')
-					pAfter++;
 				Dummy = D;
-				*ppText = pAfter;
 				return true;
 			}
-		}
-
-		// 三段式兼容：消息含 "名字1: 我的名字: "
-		const char *pColon1 = str_find(pText, ": ");
-		if(pColon1)
-		{
-			const char *pColon2 = str_find(pColon1 + 2, ": ");
-			if(pColon2)
-			{
-				const int SegmentLen = pColon2 - (pColon1 + 2);
-				if(SegmentLen == NameLen && str_comp_num(pColon1 + 2, pName, NameLen) == 0)
-				{
-					Dummy = D;
-					*ppText = pColon2 + 2;
-					return true;
-				}
-			}
+			pFound += NameLen;
 		}
 	}
 	return false;
@@ -91,19 +85,99 @@ void CAiClient::TruncateReply(char *pText, int Size)
 	((char *)p)[0] = '\0';
 }
 
-void CAiClient::SendRequest(const char *pText, int Dummy, int Team)
+// 知识库文件列表回调：收集 .txt 文件名（去重由 set 完成）
+static int KnowledgeListCallback(const char *pName, int IsDir, int Type, void *pUser)
 {
-	// RANBICLIENT m_RcAiBaseUrl / m_RcAiModel / m_RcAiToken
+	const int Len = str_length(pName);
+	if(IsDir || Len < 4 || str_comp(pName + Len - 4, ".txt") != 0)
+		return 0;
+	auto *pEntries = static_cast<std::set<std::string> *>(pUser);
+	pEntries->emplace(pName);
+	return 0;
+}
+
+// 命中规则：提问包含文件名（去 .txt，不区分大小写），或提问任一连续4字符片段出现在内容中
+static bool KnowledgeHit(const char *pQuestion, const char *pFileName, const char *pContent)
+{
+	char aName[128];
+	str_copy(aName, pFileName, sizeof(aName));
+	const int NameLen = str_length(aName);
+	if(NameLen > 4)
+		aName[NameLen - 4] = '\0';
+	if(str_find_nocase(pQuestion, aName))
+		return true;
+
+	const char *p = pQuestion;
+	while(*p)
+	{
+		const char *pEnd = p;
+		int Chars = 0;
+		for(; Chars < 4 && *pEnd; Chars++)
+			str_utf8_decode(&pEnd);
+		if(Chars < 4)
+			break;
+		char aFragment[20];
+		str_copy(aFragment, p, (int)(pEnd - p) + 1);
+		if(str_find(pContent, aFragment))
+			return true;
+		str_utf8_decode(&p);
+	}
+	return false;
+}
+
+// 枚举并筛选知识库，注入文本追加到 aKbBuf（返回追加长度）
+int CAiClient::LoadKnowledge(const char *pQuestion, char *aKbBuf, int KbBufSize)
+{
+	std::set<std::string> aFiles;
+	Storage()->ListDirectory(IStorage::TYPE_ALL, "ranbi/knowledge", KnowledgeListCallback, &aFiles);
+
+	int TotalLen = 0;
+	for(const std::string &FileName : aFiles)
+	{
+		if(TotalLen >= KbBufSize)
+			break;
+		char aPath[512];
+		str_format(aPath, sizeof(aPath), "ranbi/knowledge/%s", FileName.c_str());
+		char *pContent = Storage()->ReadFileStr(aPath, IStorage::TYPE_ALL);
+		if(!pContent)
+			continue;
+		if(!KnowledgeHit(pQuestion, FileName.c_str(), pContent))
+		{
+			free(pContent);
+			continue;
+		}
+		const int ContentLen = str_length(pContent);
+		const int UseLen = minimum(ContentLen, 4096);
+		const int HeaderLen = str_format(aKbBuf + TotalLen, KbBufSize - TotalLen, "\n[知识库: %s]\n", FileName.c_str());
+		if(HeaderLen < 0 || HeaderLen >= KbBufSize - TotalLen)
+		{
+			free(pContent);
+			break;
+		}
+		TotalLen += HeaderLen;
+		const int CopyLen = minimum(UseLen, KbBufSize - TotalLen - 1);
+		str_copy(aKbBuf + TotalLen, pContent, CopyLen + 1);
+		TotalLen += CopyLen;
+		m_KnowledgeHit = true;
+		free(pContent);
+	}
+	return TotalLen;
+}
+
+void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, int Team)
+{
+	// RANBICLIENT m_RcAiModel / m_RcAiBaseUrl / m_RcAiToken
 	char aModel[512];
-	char aText[1024];
 	EscapeJson(aModel, sizeof(aModel), g_Config.m_RcAiModel);
-	EscapeJson(aText, sizeof(aText), pText);
-	char aSystem[1024];
-	EscapeJson(aSystem, sizeof(aSystem), "你是DDNet这款游戏的玩家，你需要回复其他玩家跟你的谈话，且谈话可能为空，可能仅是打招呼。每次回复长度保证在80汉字或128字母内，过长的回复会被截断");
-	char aBody[4096];
-	str_format(aBody, sizeof(aBody),
-		"{\"model\":\"%s\",\"messages\":[{\"role\":\"system\",\"content\":\"%s\"},{\"role\":\"user\",\"content\":\"%s\"}]}",
-		aModel, aSystem, aText);
+
+	char aSystem[9000];
+	str_copy(aSystem, "你是DDNet这款游戏的玩家，你需要回复其他玩家跟你的谈话，且谈话可能为空，可能仅是打招呼。每次回复长度保证在80汉字或128字母内，过长的回复会被截断", sizeof(aSystem));
+	int SystemLen = str_length(aSystem);
+	m_KnowledgeHit = false;
+	SystemLen += LoadKnowledge(pText, aSystem + SystemLen, sizeof(aSystem) - SystemLen);
+
+	char aSystemEsc[36000];
+	EscapeJson(aSystemEsc, sizeof(aSystemEsc), aSystem);
 
 	const int UrlLen = str_length(g_Config.m_RcAiBaseUrl);
 	char aUrl[512];
@@ -115,34 +189,64 @@ void CAiClient::SendRequest(const char *pText, int Dummy, int Team)
 	char aToken[512];
 	str_format(aToken, sizeof(aToken), "Bearer %s", g_Config.m_RcAiToken);
 
-	dbg_msg("ranbi_ai", "send request: url=%s model=%s", aUrl, g_Config.m_RcAiModel);
+	char aBody[65536];
+	int BodyLen = str_format(aBody, sizeof(aBody),
+		"{\"model\":\"%s\",\"temperature\":%.1f,\"messages\":[{\"role\":\"system\",\"content\":\"%s\"",
+		aModel, g_Config.m_RcAiTemperature / 10.0f, aSystemEsc);
+
+	for(const CContextEntry &Entry : m_Context)
+	{
+		if(BodyLen + 2000 >= (int)sizeof(aBody))
+			break;
+		if(Entry.m_IsReply)
+		{
+			char aEsc[1536];
+			EscapeJson(aEsc, sizeof(aEsc), Entry.m_aText);
+			BodyLen += str_format(aBody + BodyLen, sizeof(aBody) - BodyLen, ",{\"role\":\"assistant\",\"content\":\"%s\"}", aEsc);
+		}
+		else
+		{
+			char aMsg[300];
+			str_format(aMsg, sizeof(aMsg), "%s: %s", Entry.m_aSpeaker, Entry.m_aText);
+			char aEsc[1536];
+			EscapeJson(aEsc, sizeof(aEsc), aMsg);
+			BodyLen += str_format(aBody + BodyLen, sizeof(aBody) - BodyLen, ",{\"role\":\"user\",\"content\":\"%s\"}", aEsc);
+		}
+	}
+
+	char aCurMsg[300];
+	str_format(aCurMsg, sizeof(aCurMsg), "%s: %s", pSpeaker, pText);
+	char aCurEsc[1536];
+	EscapeJson(aCurEsc, sizeof(aCurEsc), aCurMsg);
+	BodyLen += str_format(aBody + BodyLen, sizeof(aBody) - BodyLen, ",{\"role\":\"user\",\"content\":\"%s\"}]}", aCurEsc);
+
 	m_pRequest = HttpPostJson(aUrl, aBody);
 	m_pRequest->HeaderString("Authorization", aToken);
 	m_pRequest->Timeout(CTimeout{10000, 60000, 500, 5});
 	Http()->Run(m_pRequest);
 	m_ReplyDummy = Dummy;
 	m_ReplyTeam = Team;
-	m_aNextReplyTime[Dummy] = time_get() + time_freq() * 5;
+	m_aNextReplyTime[Dummy] = time_get() + time_freq() * g_Config.m_RcAiReplyInterval;
 }
 
 void CAiClient::HandleResponse()
 {
 	if(m_pRequest->State() != EHttpState::DONE)
 	{
-		dbg_msg("ranbi_ai", "response: state=%d (not DONE, dropped)", (int)m_pRequest->State());
+		dbg_msg("ranbi_ai", "[AI失败] 请求状态异常(%d)", (int)m_pRequest->State());
 		m_pRequest = nullptr;
 		return;
 	}
 	if(m_pRequest->StatusCode() < 200 || m_pRequest->StatusCode() >= 300)
 	{
-		dbg_msg("ranbi_ai", "response: http status=%d (dropped)", m_pRequest->StatusCode());
+		dbg_msg("ranbi_ai", "[AI失败] HTTP状态码 %d", m_pRequest->StatusCode());
 		m_pRequest = nullptr;
 		return;
 	}
 	json_value *pObj = m_pRequest->ResultJson();
 	if(!pObj)
 	{
-		dbg_msg("ranbi_ai", "response: invalid json (dropped)");
+		dbg_msg("ranbi_ai", "[AI失败] 响应JSON解析失败");
 		m_pRequest = nullptr;
 		return;
 	}
@@ -151,21 +255,60 @@ void CAiClient::HandleResponse()
 	const json_value *pMessage = pFirst ? json_object_get(pFirst, "message") : nullptr;
 	const json_value *pContent = pMessage ? json_object_get(pMessage, "content") : nullptr;
 	const char *pReply = pContent && pContent->type == json_string ? json_string_get(pContent) : nullptr;
-	if(pReply)
+	if(!pReply)
 	{
-		char aReply[512];
-		str_copy(aReply, pReply, sizeof(aReply));
-		TruncateReply(aReply, sizeof(aReply));
-		dbg_msg("ranbi_ai", "response: reply=\"%s\" (dummy=%d team=%d)", aReply, m_ReplyDummy, m_ReplyTeam);
-		CNetMsg_Cl_Say Msg;
-		Msg.m_Team = m_ReplyTeam;
-		Msg.m_pMessage = aReply;
-		Client()->SendPackMsg(m_ReplyDummy, &Msg, MSGFLAG_VITAL);
+		dbg_msg("ranbi_ai", "[AI失败] 响应中无 content 字段");
+		json_value_free(pObj);
+		m_pRequest = nullptr;
+		return;
 	}
-	else
+
+	char aReply[512];
+	str_copy(aReply, pReply, sizeof(aReply));
+	TruncateReply(aReply, sizeof(aReply));
+
+	const json_value *pUsage = json_object_get(pObj, "usage");
+	const json_value *pTokens = pUsage ? json_object_get(pUsage, "completion_tokens") : nullptr;
+	const int Tokens = pTokens && pTokens->type == json_integer ? (int)json_int_get(pTokens) : 0;
+
+	char aMessage[540];
+	str_format(aMessage, sizeof(aMessage), "%s: %s", m_aPendingSpeaker, aReply);
+
+	int Length = 0;
+	for(const char *p = aReply; *p;)
 	{
-		dbg_msg("ranbi_ai", "response: no content in choices[0].message (dropped)");
+		const char *pNext = p;
+		const int Ch = str_utf8_decode(&pNext);
+		Length += (Ch >= 0x4E00 && Ch <= 0x9FFF) ? 16 : 10;
+		p = pNext;
 	}
+
+	if(g_Config.m_RcAiContextCount > 0)
+	{
+		CContextEntry UserEntry;
+		str_copy(UserEntry.m_aSpeaker, m_aPendingSpeaker, sizeof(UserEntry.m_aSpeaker));
+		str_copy(UserEntry.m_aText, m_aPendingText, sizeof(UserEntry.m_aText));
+		UserEntry.m_IsReply = false;
+		m_Context.push_back(UserEntry);
+
+		CContextEntry ReplyEntry;
+		ReplyEntry.m_aSpeaker[0] = '\0';
+		str_copy(ReplyEntry.m_aText, aReply, sizeof(ReplyEntry.m_aText));
+		ReplyEntry.m_IsReply = true;
+		m_Context.push_back(ReplyEntry);
+
+		while((int)m_Context.size() > g_Config.m_RcAiContextCount * 2)
+			m_Context.erase(m_Context.begin());
+	}
+
+	dbg_msg("ranbi_ai", "[AI] 说话人: %s | 回复给: %s | 回复: %s | 知识库: %s | 长度: %d/128 | tokens: %d",
+		m_aPendingSpeaker, m_ReplyDummy == 0 ? "本体" : "分身", aReply, m_KnowledgeHit ? "是" : "否", Length / 10, Tokens);
+
+	CNetMsg_Cl_Say Msg;
+	Msg.m_Team = m_ReplyTeam;
+	Msg.m_pMessage = aMessage;
+	Client()->SendPackMsg(m_ReplyDummy, &Msg, MSGFLAG_VITAL);
+
 	json_value_free(pObj);
 	m_pRequest = nullptr;
 }
@@ -176,43 +319,22 @@ void CAiClient::OnMessage(int MsgType, void *pRawMsg)
 	if(MsgType != NETMSGTYPE_SV_CHAT)
 		return;
 	CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-	dbg_msg("ranbi_ai", "chat: client=%d team=%d auto_reply=%d msg=\"%s\"", pMsg->m_ClientId, pMsg->m_Team, g_Config.m_RcAiAutoReply, pMsg->m_pMessage);
-	if(!g_Config.m_RcAiAutoReply)
-	{
-		dbg_msg("ranbi_ai", "  skip: auto reply disabled");
+	if(!g_Config.m_RcAiAutoReply || pMsg->m_ClientId < 0)
 		return;
-	}
-	if(pMsg->m_ClientId < 0)
-	{
-		dbg_msg("ranbi_ai", "  skip: server message");
-		return;
-	}
 	if(pMsg->m_ClientId == GameClient()->m_aLocalIds[0] || (Client()->DummyConnected() && pMsg->m_ClientId == GameClient()->m_aLocalIds[1]))
-	{
-		dbg_msg("ranbi_ai", "  skip: own message");
-		return;
-	}
+		return; // 自己的消息不触发
 
 	int Dummy;
-	const char *pText;
-	if(!ParseMention(pMsg->m_pMessage, Dummy, &pText))
-	{
-		dbg_msg("ranbi_ai", "  skip: not a mention (expected \"myname: text\" or \"name: myname: text\")");
+	if(!ParseMention(pMsg->m_pMessage, Dummy))
 		return;
-	}
-	dbg_msg("ranbi_ai", "  mention matched: dummy=%d text=\"%s\"", Dummy, pText);
 	if(time_get() < m_aNextReplyTime[Dummy])
-	{
-		dbg_msg("ranbi_ai", "  skip: throttled, %d s remaining", (int)((m_aNextReplyTime[Dummy] - time_get()) / time_freq()));
 		return;
-	}
 	if(m_pRequest)
-	{
-		dbg_msg("ranbi_ai", "  skip: request already in flight");
 		return;
-	}
 
-	SendRequest(pText, Dummy, pMsg->m_Team < 0 ? 0 : pMsg->m_Team);
+	str_copy(m_aPendingSpeaker, GameClient()->m_aClients[pMsg->m_ClientId].m_aName, sizeof(m_aPendingSpeaker));
+	str_copy(m_aPendingText, pMsg->m_pMessage, sizeof(m_aPendingText));
+	SendRequest(m_aPendingText, m_aPendingSpeaker, Dummy, pMsg->m_Team < 0 ? 0 : pMsg->m_Team);
 }
 
 void CAiClient::OnUpdate()
