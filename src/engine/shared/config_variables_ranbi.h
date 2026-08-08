@@ -78,3 +78,6 @@ MACRO_CONFIG_STR(RcAiSystemPrompt, rc_ai_system_prompt, 512, "", CFGFLAG_CLIENT 
 
 MACRO_CONFIG_INT(RcAutoAttack, rc_auto_attack, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcAutoAttackInterval, rc_auto_attack_interval, 200, 50, 1000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+
+MACRO_CONFIG_INT(RcAutoBuyBait, rc_auto_buy_bait, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAutoBuyBaitInterval, rc_auto_buy_bait_interval, 30, 10, 60, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
