@@ -11,12 +11,6 @@
 
 CRanbiClient::CRanbiClient()
 {
-	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
-	{
-		m_aLastSkinChangeTick[Dummy] = 0;
-		m_aAttackNextPressTime[Dummy] = 0;
-		m_aAttackPressEndTime[Dummy] = 0;
-	}
 	OnReset();
 }
 
@@ -24,6 +18,7 @@ void CRanbiClient::OnReset()
 {
 	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
 	{
+		m_aLastSkinChangeTick[Dummy] = 0;
 		m_aAttackNextPressTime[Dummy] = 0;
 		m_aAttackPressEndTime[Dummy] = 0;
 	}
@@ -65,17 +60,28 @@ void CRanbiClient::OnUpdate()
 		}
 		else
 		{
+			if(LocalId >= 0 && LocalId < MAX_CLIENTS)
+			{
+				int &Fire = GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
+				if((Fire & 1) != 0)
+					Fire++;
+			}
 			m_aAttackNextPressTime[Dummy] = 0;
 			m_aAttackPressEndTime[Dummy] = 0;
 		}
 	}
 	else
 	{
-		for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+		const int Dummy = g_Config.m_ClDummy;
+		const int LocalId = GameClient()->m_aLocalIds[Dummy];
+		if(LocalId >= 0 && LocalId < MAX_CLIENTS)
 		{
-			m_aAttackNextPressTime[Dummy] = 0;
-			m_aAttackPressEndTime[Dummy] = 0;
+			int &Fire = GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
+			if((Fire & 1) != 0)
+				Fire++;
 		}
+		m_aAttackNextPressTime[Dummy] = 0;
+		m_aAttackPressEndTime[Dummy] = 0;
 	}
 
 	// RANBICLIENT m_RcAutoChangeSkin
