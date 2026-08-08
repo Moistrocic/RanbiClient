@@ -1,15 +1,15 @@
 #ifndef GAME_CLIENT_COMPONENTS_RANBI_AI_CLIENT_H
 #define GAME_CLIENT_COMPONENTS_RANBI_AI_CLIENT_H
 
+#include <engine/client/enums.h>
+
+#include <game/client/component.h>
+
 #include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-
-#include <engine/client/enums.h>
-
-#include <game/client/component.h>
 
 class CHttpRequest;
 
