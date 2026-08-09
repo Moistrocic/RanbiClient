@@ -46,6 +46,7 @@ void CAiClient::OnReset()
 	m_aPendingSpeaker[0] = '\0';
 	m_aPendingText[0] = '\0';
 	m_Context.clear();
+	m_ReplyQueue.clear();
 }
 
 void CAiClient::OnInit()
@@ -106,7 +107,7 @@ bool CAiClient::ParseMention(const char *pText, int &Dummy)
 	return false;
 }
 
-// 加权截断：汉字(U+4E00-U+9FFF)权重16，其他10，总权重上限1280（=128*10）
+// 加权截断：汉字(U+4E00-U+9FFF)权重16，其他10，总权重上限10240（=1024*10）
 void CAiClient::TruncateReply(char *pText, int Size)
 {
 	int Total = 0;
@@ -118,13 +119,108 @@ void CAiClient::TruncateReply(char *pText, int Size)
 		if(Ch == -1)
 			break;
 		Total += (Ch >= 0x4E00 && Ch <= 0x9FFF) ? 16 : 10;
-		if(Total > 1280)
+		if(Total > 10240)
 			break;
 		p = pNext;
 	}
 	if(p - pText >= Size)
 		p = pText + Size - 1;
 	((char *)p)[0] = '\0';
+}
+
+// UTF-8 字符数（不含终止符）
+static int Utf8CharCount(const char *pText)
+{
+	int Count = 0;
+	for(const char *p = pText; *p;)
+	{
+		const char *pNext = p;
+		const int Ch = str_utf8_decode(&pNext);
+		if(Ch == -1)
+			break;
+		Count++;
+		p = pNext;
+	}
+	return Count;
+}
+
+// 按句号（。或.）拆分句子，忽略空句；无句号的剩余部分也作为一句
+void CAiClient::SplitSentences(const char *pText, std::vector<std::string> &Sentences)
+{
+	const char *pStart = pText;
+	const char *p = pText;
+	while(*p)
+	{
+		const char *pNext = p;
+		const int Ch = str_utf8_decode(&pNext);
+		if(Ch == -1)
+			break;
+		if(Ch == 0x3002 || Ch == '.')
+		{
+			std::string Sentence(pStart, pNext);
+			if(!Sentence.empty())
+			{
+				bool OnlySpace = true;
+				for(char c : Sentence)
+				{
+					if(c != ' ' && c != '\t' && c != '\n' && c != '\r')
+						OnlySpace = false;
+				}
+				if(!OnlySpace)
+					Sentences.push_back(Sentence);
+			}
+			pStart = pNext;
+		}
+		p = pNext;
+	}
+	if(pStart != p)
+	{
+		std::string Tail(pStart, p);
+		if(!Tail.empty())
+			Sentences.push_back(Tail);
+	}
+}
+
+// RANBICLIENT m_RcAiMinSentenceLength：客户端合并——积累的句子字符数小于最小长度时与下一句合并（合并后不超过最大长度）；不足最小长度的剩余句子也照常发送
+static void MergeSentences(const std::vector<std::string> &Sentences, std::vector<std::string> &Merged)
+{
+	const int MinLen = g_Config.m_RcAiMinSentenceLength;
+	const int MaxLen = g_Config.m_RcAiMaxSentenceLength;
+	std::string Accum;
+	for(const std::string &Sentence : Sentences)
+	{
+		if(Accum.empty())
+		{
+			Accum = Sentence;
+			if(Utf8CharCount(Accum.c_str()) >= MinLen)
+			{
+				Merged.push_back(Accum);
+				Accum.clear();
+			}
+		}
+		else if(Utf8CharCount(Accum.c_str()) + Utf8CharCount(Sentence.c_str()) <= MaxLen)
+		{
+			Accum += Sentence;
+			if(Utf8CharCount(Accum.c_str()) >= MinLen)
+			{
+				Merged.push_back(Accum);
+				Accum.clear();
+			}
+		}
+		else
+		{
+			// 合并将超过最大长度：先发送积累部分（即使不足最小长度），再处理当前句
+			Merged.push_back(Accum);
+			Accum = Sentence;
+			if(Utf8CharCount(Accum.c_str()) >= MinLen)
+			{
+				Merged.push_back(Accum);
+				Accum.clear();
+			}
+		}
+	}
+	if(!Accum.empty())
+		Merged.push_back(Accum);
 }
 
 // 知识库文件列表回调：收集 .txt 文件名（去重由 set 完成）
@@ -284,9 +380,19 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 		IdentityLen += Len;
 	}
 	const int RuleLen = str_format(aIdentity + IdentityLen, (int)sizeof(aIdentity) - IdentityLen,
-		"%s", "\n对话消息格式为\"玩家名: 消息内容\"，冒号前是说话玩家的名字。其他玩家提到你的名字就是在跟你说话。不知道的知识先查询知识库，如果知识库没有则回答不知道。");
+		"%s", "\n其他玩家提到你的名字就是在跟你说话。不知道的知识或名词名称先查询知识库，如果知识库没有则回答不知道。");
 	if(RuleLen >= 0 && RuleLen < (int)sizeof(aIdentity) - IdentityLen)
 		IdentityLen += RuleLen;
+	// RANBICLIENT m_RcAiMaxSentenceLength：告知 AI 单句话长度上限与结尾要求
+	const int SentenceRuleLen = str_format(aIdentity + IdentityLen, (int)sizeof(aIdentity) - IdentityLen,
+		"\n每次回复请分成多句话，每句话不超过%d个汉字，每句话必须以句号（。或.）结尾。", g_Config.m_RcAiMaxSentenceLength);
+	if(SentenceRuleLen >= 0 && SentenceRuleLen < (int)sizeof(aIdentity) - IdentityLen)
+		IdentityLen += SentenceRuleLen;
+	// 语言跟随：对方用什么语言说话就用什么语言回复，对方可能在一条消息中切换多种语言
+	const int LangRuleLen = str_format(aIdentity + IdentityLen, (int)sizeof(aIdentity) - IdentityLen,
+		"%s", "\n对方用什么语言跟你说话，你就用什么语言回复。对方可能会在一条消息中切换多种语言。");
+	if(LangRuleLen >= 0 && LangRuleLen < (int)sizeof(aIdentity) - IdentityLen)
+		IdentityLen += LangRuleLen;
 	if(IdentityLen > 0 && IdentityLen < (int)sizeof(aSystem) - SystemLen - 1)
 	{
 		str_copy(aSystem + SystemLen, aIdentity, sizeof(aSystem) - SystemLen);
@@ -332,7 +438,7 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 			break;
 		if(Entry.m_IsReply)
 		{
-			char aEsc[1536];
+			char aEsc[4096];
 			EscapeJson(aEsc, sizeof(aEsc), Entry.m_aText);
 			BodyLen += str_format(aBody + BodyLen, sizeof(aBody) - BodyLen, ",{\"role\":\"assistant\",\"content\":\"%s\"}", aEsc);
 		}
@@ -348,7 +454,7 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 
 	char aCurMsg[300];
 	str_format(aCurMsg, sizeof(aCurMsg), "%s: %s", pSpeaker, pText);
-	char aCurEsc[1536];
+	char aCurEsc[4096];
 	EscapeJson(aCurEsc, sizeof(aCurEsc), aCurMsg);
 	BodyLen += str_format(aBody + BodyLen, sizeof(aBody) - BodyLen, ",{\"role\":\"user\",\"content\":\"%s\"}]}", aCurEsc);
 
@@ -395,16 +501,13 @@ void CAiClient::HandleResponse()
 		return;
 	}
 
-	char aReply[512];
+	char aReply[2048];
 	str_copy(aReply, pReply, sizeof(aReply));
 	TruncateReply(aReply, sizeof(aReply));
 
 	const json_value *pUsage = json_object_get(pObj, "usage");
 	const json_value *pTokens = pUsage ? json_object_get(pUsage, "completion_tokens") : nullptr;
 	const int Tokens = pTokens && pTokens->type == json_integer ? (int)json_int_get(pTokens) : 0;
-
-	char aMessage[540];
-	str_format(aMessage, sizeof(aMessage), "%s: %s", m_aPendingSpeaker, aReply);
 
 	int Length = 0;
 	for(const char *p = aReply; *p;)
@@ -433,13 +536,27 @@ void CAiClient::HandleResponse()
 			m_Context.erase(m_Context.begin());
 	}
 
-	dbg_msg("ranbi_ai", "[AI] 说话人: %s | 回复给: %s | 回复: %s | 知识库: %s | 长度: %d/128 | tokens: %d",
+	dbg_msg("ranbi_ai", "[AI] 说话人: %s | 回复给: %s | 回复: %s | 知识库: %s | 长度: %d/1024 | tokens: %d",
 		m_aPendingSpeaker, m_ReplyDummy == 0 ? "本体" : "分身", aReply, m_KnowledgeHit ? "是" : "否", Length / 10, Tokens);
 
-	CNetMsg_Cl_Say Msg;
-	Msg.m_Team = m_ReplyTeam;
-	Msg.m_pMessage = aMessage;
-	Client()->SendPackMsg(m_ReplyDummy, &Msg, MSGFLAG_VITAL);
+	// RANBICLIENT m_RcAiMaxSentenceLength / m_RcAiMinSentenceLength：拆句合并后入队，第一句立即发送，其余按发送间隔分批发送
+	m_ReplyQueue.clear();
+	{
+		std::vector<std::string> Sentences;
+		SplitSentences(aReply, Sentences);
+		MergeSentences(Sentences, m_ReplyQueue);
+	}
+	if(!m_ReplyQueue.empty())
+	{
+		char aMessage[4096];
+		str_format(aMessage, sizeof(aMessage), "%s: %s", m_aPendingSpeaker, m_ReplyQueue[0].c_str());
+		CNetMsg_Cl_Say Msg;
+		Msg.m_Team = m_ReplyTeam;
+		Msg.m_pMessage = aMessage;
+		Client()->SendPackMsg(m_ReplyDummy, &Msg, MSGFLAG_VITAL);
+		m_ReplyQueue.erase(m_ReplyQueue.begin());
+		m_aNextReplyTime[m_ReplyDummy] = time_get() + time_freq() * g_Config.m_RcAiReplyInterval;
+	}
 
 	json_value_free(pObj);
 	m_pRequest = nullptr;
@@ -471,6 +588,18 @@ void CAiClient::OnMessage(int MsgType, void *pRawMsg)
 
 void CAiClient::OnUpdate()
 {
+	// RANBICLIENT m_RcAiMaxSentenceLength：按发送间隔分批发送队列中的句子
+	if(!m_ReplyQueue.empty() && time_get() >= m_aNextReplyTime[m_ReplyDummy])
+	{
+		char aMessage[4096];
+		str_format(aMessage, sizeof(aMessage), "%s: %s", m_aPendingSpeaker, m_ReplyQueue[0].c_str());
+		CNetMsg_Cl_Say Msg;
+		Msg.m_Team = m_ReplyTeam;
+		Msg.m_pMessage = aMessage;
+		Client()->SendPackMsg(m_ReplyDummy, &Msg, MSGFLAG_VITAL);
+		m_ReplyQueue.erase(m_ReplyQueue.begin());
+		m_aNextReplyTime[m_ReplyDummy] = time_get() + time_freq() * g_Config.m_RcAiReplyInterval;
+	}
 	if(!m_pRequest)
 		return;
 	if(!m_pRequest->Done())

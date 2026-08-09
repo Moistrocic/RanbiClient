@@ -18,7 +18,7 @@ class CAiClient : public CComponent
 	struct CContextEntry
 	{
 		char m_aSpeaker[16];
-		char m_aText[256];
+		char m_aText[2048];
 		bool m_IsReply;
 	};
 
@@ -30,9 +30,11 @@ class CAiClient : public CComponent
 	bool m_KnowledgeHit;
 	char m_aPendingSpeaker[16];
 	char m_aPendingText[256];
+	std::vector<std::string> m_ReplyQueue;
 
 	bool ParseMention(const char *pText, int &Dummy);
 	static void TruncateReply(char *pText, int Size);
+	static void SplitSentences(const char *pText, std::vector<std::string> &Sentences);
 	int LoadKnowledge(const char *pQuestion, char *aKbBuf, int KbBufSize);
 	void SendRequest(const char *pText, const char *pSpeaker, int Dummy, int Team);
 	void HandleResponse();

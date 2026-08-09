@@ -748,6 +748,12 @@ void CMenus::RenderRanbiAI(CUIRect MainView)
 	Ui()->DoScrollbarOption(&g_Config.m_RcAiReplyInterval, &g_Config.m_RcAiReplyInterval, &Button, RCLocalize("Reply interval (seconds)"), 1, 60);
 
 	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAiMaxSentenceLength, &g_Config.m_RcAiMaxSentenceLength, &Button, RCLocalize("Max sentence length (chars)"), 1, 100);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_RcAiMinSentenceLength, &g_Config.m_RcAiMinSentenceLength, &Button, RCLocalize("Min sentence length (chars)"), 1, 100);
+
+	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_RcAiTemperature, &g_Config.m_RcAiTemperature, &Button, RCLocalize("Temperature (x0.1)"), 0, 20);
 
 	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
