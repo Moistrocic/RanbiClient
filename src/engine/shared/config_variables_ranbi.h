@@ -71,6 +71,8 @@ MACRO_CONFIG_STR(RcAiToken, rc_ai_token, 256, "", CFGFLAG_CLIENT | CFGFLAG_SAVE,
 MACRO_CONFIG_INT(RcAiAutoReply, rc_ai_auto_reply, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
 MACRO_CONFIG_INT(RcAiReplyInterval, rc_ai_reply_interval, 2, 1, 60, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAiMaxSentenceLength, rc_ai_max_sentence_length, 20, 1, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAiMinSentenceLength, rc_ai_min_sentence_length, 5, 1, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcAiTemperature, rc_ai_temperature, 10, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcAiContextCount, rc_ai_context_count, 5, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
