@@ -414,6 +414,16 @@ void CAiClient::SendRequest(const char *pText, const char *pSpeaker, int Dummy, 
 			SystemLen += InfoLen;
 	}
 
+	// 追加服务器公告到系统提示词末尾
+	const char *pMotd = GameClient()->m_Motd.ServerMotd();
+	if(pMotd[0] != '\0')
+	{
+		const int MotdLen = str_format(aSystem + SystemLen, sizeof(aSystem) - SystemLen,
+			"\n服务器公告：%s", pMotd);
+		if(MotdLen >= 0 && MotdLen < (int)sizeof(aSystem) - SystemLen)
+			SystemLen += MotdLen;
+	}
+
 	char aSystemEsc[36000];
 	EscapeJson(aSystemEsc, sizeof(aSystemEsc), aSystem);
 
