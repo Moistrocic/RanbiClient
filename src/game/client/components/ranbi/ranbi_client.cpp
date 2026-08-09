@@ -42,47 +42,6 @@ void CRanbiClient::OnConsoleInit()
 
 void CRanbiClient::OnUpdate()
 {
-	// RANBICLIENT m_RcLockAim：配置驱动光标锁定状态——开启时记录当前光标指向的方块中心并保存用户视野
-	if(g_Config.m_RcLockAim && !m_LockAimActive)
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		vec2 WorldPos = GameClient()->m_Camera.m_Center + GameClient()->m_Controls.m_aMousePos[Dummy];
-		m_LockAimTarget = vec2((int)std::floor(WorldPos.x / 32.0f) * 32 + 16, (int)std::floor(WorldPos.y / 32.0f) * 32 + 16);
-		m_LockAimSavedZoom = GameClient()->m_Camera.m_UserZoomTarget;
-		m_LockAimActive = true;
-	}
-	else if(!g_Config.m_RcLockAim && m_LockAimActive)
-	{
-		GameClient()->m_Camera.m_UserZoomTarget = m_LockAimSavedZoom;
-		m_LockAimActive = false;
-	}
-
-	// RANBICLIENT m_RcLockAim：锁定光标瞄准的地图方块——动态更新光标位置与视野，保证方块不丢失
-	if(m_LockAimActive)
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		const int LocalId = GameClient()->m_aLocalIds[Dummy];
-		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active &&
-			!GameClient()->m_Snap.m_SpecInfo.m_Active)
-		{
-			const vec2 Center = GameClient()->m_Camera.m_Center;
-			const vec2 MousePos = m_LockAimTarget - Center;
-			// 光标直接指向目标方块（距离超出光标限制时由 ClampMousePos 限制距离，角度保持指向方块）
-			GameClient()->m_Controls.m_aMousePos[Dummy] = MousePos;
-
-			// 视野：zoom 值越大视野越大。目标方块在屏幕内所需的 zoom（留 10% 边距）
-			float BaseHalfH;
-			{
-				float W, H;
-				Graphics()->CalcScreenParams(Graphics()->ScreenAspect(), 1.0f, &W, &H);
-				BaseHalfH = H;
-			}
-			const float NeedZoom = length(MousePos) / (BaseHalfH * 0.9f);
-			// 方块在光标限制距离内（可被锁定）时缩回用户视野，否则保持大视野让方块不丢失
-			GameClient()->m_Camera.m_UserZoomTarget = maximum(m_LockAimSavedZoom, NeedZoom);
-		}
-	}
-
 	// RANBICLIENT m_RcAutoAttack
 	if(g_Config.m_RcAutoAttack)
 	{
@@ -262,6 +221,72 @@ void CRanbiClient::OnUpdate()
 				}
 			}
 			return;
+		}
+	}
+}
+
+// RANBICLIENT m_RcLockAim：锁定光标瞄准的地图位置
+// 实测公式：地图距离 = 光标距离(屏幕单位) × zoom；视觉格数 = 光标距离 × zoom / 32
+// 开启时由玩家坐标+光标推算锁定方块；玩家移动后反推光标角度与光标距离；
+// 光标距离受限(最大鼠标距离)时保持角度；脱离视野时放大视野保证可见，进入视野时恢复
+void CRanbiClient::OnRender()
+{
+	// 状态同步：配置开启时记录玩家坐标，推算光标地图坐标并锁定到方块中心
+	if(g_Config.m_RcLockAim && !m_LockAimActive)
+	{
+		const int Dummy = g_Config.m_ClDummy;
+		const vec2 PlayerPos = GameClient()->m_LocalCharacterPos;
+		const vec2 MousePos = GameClient()->m_Controls.m_aMousePos[Dummy];
+		const float Dist = length(MousePos);
+		const float Zoom = GameClient()->m_Camera.m_Zoom;
+		// 地图距离 = 光标距离 × zoom；光标地图坐标 = 玩家坐标 + 方向 × 地图距离
+		const vec2 Dir = Dist > 0.001f ? MousePos / Dist : vec2(1.0f, 0.0f);
+		const vec2 CursorPos = PlayerPos + Dir * (Dist * Zoom);
+		m_LockAimTarget = vec2((int)std::floor(CursorPos.x / 32.0f) * 32 + 16, (int)std::floor(CursorPos.y / 32.0f) * 32 + 16);
+		m_LockAimSavedZoom = GameClient()->m_Camera.m_UserZoomTarget;
+		m_LockAimActive = true;
+	}
+	else if(!g_Config.m_RcLockAim && m_LockAimActive)
+	{
+		GameClient()->m_Camera.m_UserZoomTarget = m_LockAimSavedZoom;
+		m_LockAimActive = false;
+	}
+
+	if(m_LockAimActive)
+	{
+		const int Dummy = g_Config.m_ClDummy;
+		const int LocalId = GameClient()->m_aLocalIds[Dummy];
+		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active &&
+			!GameClient()->m_Snap.m_SpecInfo.m_Active)
+		{
+			// 玩家移动：计算玩家-方块距离和方向，反推光标角度与光标距离(屏幕单位)
+			const vec2 PlayerPos = GameClient()->m_LocalCharacterPos;
+			const vec2 ToTarget = m_LockAimTarget - PlayerPos;
+			const float MapDist = length(ToTarget);
+			const float Zoom = GameClient()->m_Camera.m_Zoom;
+			vec2 MousePos = ToTarget;
+			if(MapDist > 0.001f)
+			{
+				// 光标距离(屏幕) = 地图距离 / zoom；超过最大鼠标距离时角度保持、距离取限制值
+				const float MaxDistance = GameClient()->m_Controls.GetMaxMouseDistance();
+				const float CursorDist = MapDist / Zoom;
+				MousePos = ToTarget / MapDist * minimum(CursorDist, MaxDistance);
+			}
+			GameClient()->m_Controls.m_aMousePos[Dummy] = MousePos;
+
+			// 视野：zoom 值越大视野越大
+			// 距离条件（保证光标能锁定方块）：光标距离 ≤ 最大距离 → zoom ≥ 地图距离 / 最大距离
+			// 视野条件（保证方块在屏幕内，留 10% 边距）：zoom ≥ 方块到相机中心距离 / (半高@zoom=1 × 0.9)
+			float BaseHalfH;
+			{
+				float W, H;
+				Graphics()->CalcScreenParams(Graphics()->ScreenAspect(), 1.0f, &W, &H);
+				BaseHalfH = H;
+			}
+			const float DistToCenter = length(m_LockAimTarget - GameClient()->m_Camera.m_Center);
+			const float NeedZoom = maximum(MapDist / GameClient()->m_Controls.GetMaxMouseDistance(),
+				DistToCenter / (BaseHalfH * 0.9f));
+			GameClient()->m_Camera.m_UserZoomTarget = maximum(m_LockAimSavedZoom, NeedZoom);
 		}
 	}
 }

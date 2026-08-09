@@ -53,6 +53,7 @@ public:
 	void OnConsoleInit() override;
 	void OnUpdate() override;
 	void OnReset() override;
+	void OnRender() override;
 
 	SCollisionSkinInfo m_LastCollisionSkin;
 
