@@ -1,6 +1,8 @@
 #ifndef GAME_CLIENT_COMPONENTS_RANBI_RANBI_CLIENT_H
 #define GAME_CLIENT_COMPONENTS_RANBI_RANBI_CLIENT_H
 
+#include <base/vmath.h>
+
 #include <engine/client/enums.h>
 #include <engine/console.h>
 #include <engine/shared/protocol.h>
@@ -62,7 +64,11 @@ private:
 	int64_t m_aAttackPressEndTime[NUM_DUMMIES];
 	bool m_aAttackFireInjected[NUM_DUMMIES];
 	int64_t m_BuyBaitNextCheckTime;
+	bool m_LockAimActive;
+	vec2 m_LockAimTarget;
+	float m_LockAimSavedZoom;
 	static void ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData);
+	static void ConLockAim(IConsole::IResult *pResult, void *pUserData);
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 };
 
