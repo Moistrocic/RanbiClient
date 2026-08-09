@@ -68,7 +68,6 @@ private:
 	vec2 m_LockAimTarget;
 	float m_LockAimSavedZoom;
 	static void ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData);
-	static void ConLockAim(IConsole::IResult *pResult, void *pUserData);
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 };
 

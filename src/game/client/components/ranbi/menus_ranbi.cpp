@@ -264,6 +264,8 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 	Column.HSplitTop(s_LineSize + s_MarginExtraSmall, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_RcAutoBuyBaitInterval, &g_Config.m_RcAutoBuyBaitInterval, &Button, RCLocalize("Buy bait interval (s)"), 10, 60);
 
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcLockAim, RCLocalize("Lock aim on map tile"), &g_Config.m_RcLockAim, &Column, s_LineSize);
+
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	RightView = Column;

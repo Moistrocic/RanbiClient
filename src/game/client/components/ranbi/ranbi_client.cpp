@@ -38,11 +38,51 @@ void CRanbiClient::OnConsoleInit()
 		pConfigManager->RegisterCallback(ConfigSaveCallback, this, ConfigDomain::RANBIWEAPONS);
 
 	Console()->Register("add_weapon_angle", "i[weapon_id] f[angle_start] f[angle_end] i[color] ?s[note]", CFGFLAG_CLIENT, ConAddWeaponAngle, this, "Add a weapon angle config");
-	Console()->Register("rc_lock_aim", "", CFGFLAG_CLIENT, ConLockAim, this, "Toggle aiming lock on the map tile under the cursor");
 }
 
 void CRanbiClient::OnUpdate()
 {
+	// RANBICLIENT m_RcLockAim：配置驱动光标锁定状态——开启时记录当前光标指向的方块中心并保存用户视野
+	if(g_Config.m_RcLockAim && !m_LockAimActive)
+	{
+		const int Dummy = g_Config.m_ClDummy;
+		vec2 WorldPos = GameClient()->m_Camera.m_Center + GameClient()->m_Controls.m_aMousePos[Dummy];
+		m_LockAimTarget = vec2((int)std::floor(WorldPos.x / 32.0f) * 32 + 16, (int)std::floor(WorldPos.y / 32.0f) * 32 + 16);
+		m_LockAimSavedZoom = GameClient()->m_Camera.m_UserZoomTarget;
+		m_LockAimActive = true;
+	}
+	else if(!g_Config.m_RcLockAim && m_LockAimActive)
+	{
+		GameClient()->m_Camera.m_UserZoomTarget = m_LockAimSavedZoom;
+		m_LockAimActive = false;
+	}
+
+	// RANBICLIENT m_RcLockAim：锁定光标瞄准的地图方块——动态更新光标位置与视野，保证方块不丢失
+	if(m_LockAimActive)
+	{
+		const int Dummy = g_Config.m_ClDummy;
+		const int LocalId = GameClient()->m_aLocalIds[Dummy];
+		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active &&
+			!GameClient()->m_Snap.m_SpecInfo.m_Active)
+		{
+			const vec2 Center = GameClient()->m_Camera.m_Center;
+			const vec2 MousePos = m_LockAimTarget - Center;
+			// 光标直接指向目标方块（距离超出光标限制时由 ClampMousePos 限制距离，角度保持指向方块）
+			GameClient()->m_Controls.m_aMousePos[Dummy] = MousePos;
+
+			// 视野：zoom 值越大视野越大。目标方块在屏幕内所需的 zoom（留 10% 边距）
+			float BaseHalfH;
+			{
+				float W, H;
+				Graphics()->CalcScreenParams(Graphics()->ScreenAspect(), 1.0f, &W, &H);
+				BaseHalfH = H;
+			}
+			const float NeedZoom = length(MousePos) / (BaseHalfH * 0.9f);
+			// 方块在光标限制距离内（可被锁定）时缩回用户视野，否则保持大视野让方块不丢失
+			GameClient()->m_Camera.m_UserZoomTarget = maximum(m_LockAimSavedZoom, NeedZoom);
+		}
+	}
+
 	// RANBICLIENT m_RcAutoAttack
 	if(g_Config.m_RcAutoAttack)
 	{
@@ -224,32 +264,6 @@ void CRanbiClient::OnUpdate()
 			return;
 		}
 	}
-
-	// RANBICLIENT rc_lock_aim：锁定光标瞄准的地图方块——动态更新光标位置与视野，保证方块不丢失
-	if(m_LockAimActive)
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		const int LocalId = GameClient()->m_aLocalIds[Dummy];
-		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active &&
-			!GameClient()->m_Snap.m_SpecInfo.m_Active)
-		{
-			const vec2 Center = GameClient()->m_Camera.m_Center;
-			const vec2 MousePos = m_LockAimTarget - Center;
-			// 光标直接指向目标方块（距离超出光标限制时由 ClampMousePos 限制距离，角度保持指向方块）
-			GameClient()->m_Controls.m_aMousePos[Dummy] = MousePos;
-
-			// 视野：zoom 值越大视野越大。目标方块在屏幕内所需的 zoom（留 10% 边距）
-			float BaseHalfH;
-			{
-				float W, H;
-				Graphics()->CalcScreenParams(Graphics()->ScreenAspect(), 1.0f, &W, &H);
-				BaseHalfH = H;
-			}
-			const float NeedZoom = length(MousePos) / (BaseHalfH * 0.9f);
-			// 方块在光标限制距离内（可被锁定）时缩回用户视野，否则保持大视野让方块不丢失
-			GameClient()->m_Camera.m_UserZoomTarget = maximum(m_LockAimSavedZoom, NeedZoom);
-		}
-	}
 }
 
 void CRanbiClient::ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData)
@@ -262,25 +276,6 @@ void CRanbiClient::ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData
 	Weapon.m_Color = pResult->GetInteger(3);
 	str_copy(Weapon.m_aNote, pResult->GetString(4));
 	pThis->m_vWeapons.push_back(Weapon);
-}
-
-// rc_lock_aim：切换光标瞄准锁定。开启时锁定当前光标指向的地图方块中心，关闭时恢复保存的用户视野
-void CRanbiClient::ConLockAim(IConsole::IResult *pResult, void *pUserData)
-{
-	CRanbiClient *pThis = (CRanbiClient *)pUserData;
-	pThis->m_LockAimActive = !pThis->m_LockAimActive;
-	if(pThis->m_LockAimActive)
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		vec2 WorldPos = pThis->GameClient()->m_Camera.m_Center + pThis->GameClient()->m_Controls.m_aMousePos[Dummy];
-		// 锁定到方块中心（32 单位一格）
-		pThis->m_LockAimTarget = vec2((int)std::floor(WorldPos.x / 32.0f) * 32 + 16, (int)std::floor(WorldPos.y / 32.0f) * 32 + 16);
-		pThis->m_LockAimSavedZoom = pThis->GameClient()->m_Camera.m_UserZoomTarget;
-	}
-	else
-	{
-		pThis->GameClient()->m_Camera.m_UserZoomTarget = pThis->m_LockAimSavedZoom;
-	}
 }
 
 void CRanbiClient::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData)
