@@ -3,10 +3,10 @@
 #include <base/dbg.h>
 #include <base/system.h>
 
+#include <game/client/gameclient.h>
+
 #include <stdarg.h>
 #include <stdlib.h>
-
-#include <game/client/gameclient.h>
 
 CAutoFish::CAutoFish()
 {
@@ -22,7 +22,6 @@ void CAutoFish::OnReset()
 		m_aAttackFireInjected[Dummy] = false;
 	}
 
-	m_BuyBaitNextCheckTime = 0;
 
 	m_LockAimActive = false;
 	m_LockAimTarget = vec2(0, 0);
@@ -96,31 +95,8 @@ void CAutoFish::OnUpdate()
 		m_aAttackPressEndTime[Dummy] = 0;
 	}
 
-	// AUTO FISH m_RcAutoBuyBait
-	if(g_Config.m_RcAutoBuyBait)
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		const int LocalId = GameClient()->m_aLocalIds[Dummy];
-		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active)
-		{
-			const int64_t Now = time_get();
-			if(m_BuyBaitNextCheckTime == 0)
-				m_BuyBaitNextCheckTime = Now;
-			if(Now >= m_BuyBaitNextCheckTime)
-			{
-				BuyBaitOnce();
-				m_BuyBaitNextCheckTime = Now + time_freq() * 30; // 固定 30 秒检查一次
-			}
-		}
-		else
-		{
-			m_BuyBaitNextCheckTime = 0;
-		}
-	}
-	else
-	{
-		m_BuyBaitNextCheckTime = 0;
-	}
+	// AUTO FISH m_RcAutoBuyBait：不再定时轮询，改为由控制台消息驱动（规则 3/4，见 OnMessage）
+	// 菜单开关 rc_auto_buy_bait 作为消息驱动购买的开关
 
 	// 检测玩家上方 15x7 区域内的钓鱼目标（武士刀/解冻激光/霰弹枪激光）
 	UpdateRegionTargets();
@@ -137,21 +113,6 @@ void CAutoFish::OnUpdate()
 
 	// 异常状态检查（玩家与准星距离超 20 格时自动终止）
 	CheckAbnormalStop();
-
-	// 节流输出检测结果（调试）
-	const int64_t Now = time_get();
-	if(Now >= m_DebugLaserNextPrintTime)
-	{
-		m_DebugLaserNextPrintTime = Now + time_freq() / 2;
-		if(m_Targets.m_Valid)
-		{
-			dbg_msg("ranbi/autofish", "targets katana=%s(%.0f) unfreeze=%s(%.0f) shotgun=%s(%.0f) stamina=%s(%.0f->%.0f)",
-				m_Targets.m_HasKatana ? "Y" : "N", m_Targets.m_KatanaX,
-				m_Targets.m_HasUnfreeze ? "Y" : "N", m_Targets.m_UnfreezeX,
-				m_Targets.m_HasShotgun ? "Y" : "N", m_Targets.m_ShotgunX,
-				m_Targets.m_HasStamina ? "Y" : "N", m_Targets.m_StaminaFromX, m_Targets.m_StaminaToX);
-		}
-	}
 }
 
 // 检测玩家上方 15x7 区域内的钓鱼目标：武士刀（POWERUP_NINJA pickup）、解冻激光（旧 LASER）、霰弹枪激光（SHOTGUN）
@@ -340,15 +301,20 @@ void CAutoFish::CheckAbnormalStop()
 	if(LocalId < 0 || LocalId >= MAX_CLIENTS || !GameClient()->m_aClients[LocalId].m_Active)
 		return;
 
-	// 准星世界坐标 = 相机中心 + 光标偏移
-	const vec2 CursorPos = GameClient()->m_Camera.m_Center + GameClient()->m_Controls.m_aMousePos[Dummy];
-	const float Dist = distance(GameClient()->m_LocalCharacterPos, CursorPos);
-	if(Dist > 20.0f * 32.0f)
+	// 准星世界坐标：与 m_RcLockAim 相同的换算（地图距离 = 光标距离 × zoom）
+	const vec2 PlayerPos = GameClient()->m_LocalCharacterPos;
+	const vec2 MousePos = GameClient()->m_Controls.m_aMousePos[Dummy];
+	const float Dist = length(MousePos);
+	const float Zoom = GameClient()->m_Camera.m_Zoom;
+	const vec2 Dir = Dist > 0.001f ? MousePos / Dist : vec2(1.0f, 0.0f);
+	const vec2 CursorPos = PlayerPos + Dir * (Dist * Zoom);
+	const float PlayerCursorDist = distance(PlayerPos, CursorPos);
+	if(PlayerCursorDist > 20.0f * 32.0f)
 	{
 		g_Config.m_RcAutoFishing = 0;
 		m_FishingActive = false;
 		m_CastActive = false;
-		dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles), auto fishing stopped", Dist);
+		dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles), auto fishing stopped", PlayerCursorDist);
 	}
 }
 
@@ -440,38 +406,33 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 	m_CurrentChatCategory = pCategory;
 	m_CurrentChatText = pMsg->m_pMessage;
 
-	// 使用示例：检测玩家进入游戏并输出玩家名
-	char aName[128];
-	if(ConsoleTriggerCheck(pCategory, "%s entered and joined the game", aName))
-	{
-		dbg_msg("ranbi/dbg", "name:%s", aName);
-	}
-
-	// 规则 1：鱼上钩 → 激活自动钓鱼收线控制
+	// 规则 1：鱼上钩 → 激活自动钓鱼收线控制，停止出钩重试
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 鱼上钩了！"))
 	{
 		m_FishingActive = true;
+		m_CastActive = false;
 	}
 
-	// 规则 2：钓到鱼 → 关闭收线控制、累计币值并出钩
+	// 规则 2：钓到鱼 → 关闭收线控制、累计币值并重新出钩（续钓）
 	{
 		char aFish[64];
 		int Price = 0;
-		if(ConsoleTriggerCheck("chat/server", "[钓鱼] 钓到%s，价值 %d 币", aFish, &Price))
+		if(ConsoleTriggerCheck("chat/server", "[钓鱼] 钓到%s x1，价值 %d 币", aFish, &Price))
 		{
 			m_FishingActive = false;
 			m_TotalFishCoins += Price;
-			dbg_msg("ranbi/autofish", "caught '%s' +%d coins, total %lld", aFish, Price, m_TotalFishCoins);
+			dbg_msg("ranbi/autofish", "caught '%s' +%d coins, total %lld, recasting", aFish, Price, m_TotalFishCoins);
 			CastRod();
 		}
 	}
 
-	// 规则 3：购买鱼饵成功 → 当前数量不足时继续购买
+	// 规则 3：购买鱼饵成功 → 当前数量不足时继续购买（受 rc_auto_buy_bait 开关控制）
 	{
 		int Bought = 0, Cur = 0, Max = 0;
 		if(ConsoleTriggerCheck("chat/server", "[商店] 购买鱼饵成功 %d 个，当前 %d/%d 个", &Bought, &Cur, &Max))
 		{
-			if(Cur < Max)
+			dbg_msg("ranbi/autofish", "bait bought: %d/%d", Cur, Max);
+			if(g_Config.m_RcAutoBuyBait && Cur < Max)
 				BuyBaitOnce();
 		}
 	}
@@ -493,11 +454,13 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 		{
 			g_Config.m_RcAutoFishing = 0;
 			m_FishingActive = false;
+			m_CastActive = false;
 			dbg_msg("ranbi/autofish", "no bait 3 times in 10s, auto fishing stopped");
 		}
 		else
 		{
-			BuyBaitOnce();
+			if(g_Config.m_RcAutoBuyBait)
+				BuyBaitOnce();
 			CastRod();
 		}
 	}
