@@ -39,8 +39,7 @@ private:
 	vec2 m_LockAimTarget;
 	float m_LockAimSavedZoom;
 	// 控制台信息检测（OnMessage 记录当前消息，ConsoleTriggerCheck 按类别+模式匹配并返回捕获值，仿 scanf 格式符）
-	enum class EConsoleTriggerType : char
-	{
+	enum class EConsoleTriggerType : char	{
 		String,
 		Char,
 		Short,
@@ -64,6 +63,22 @@ private:
 	std::vector<int> m_vConsoleTriggerBases;
 	bool ConsoleTriggerCheck(const char *pCategory, const char *pPattern, ...);
 	bool ConsoleTriggerBuildRegex(const char *pPattern);
+	// 玩家上方 15x7 区域内的钓鱼目标检测（武士刀/解冻激光/霰弹枪激光的 x 坐标）
+	struct SAutoFishTargets
+	{
+		bool m_Valid = false;
+		bool m_HasKatana = false;
+		float m_KatanaX = 0.0f;
+		bool m_HasUnfreeze = false;
+		float m_UnfreezeX = 0.0f;
+		bool m_HasShotgun = false;
+		float m_ShotgunX = 0.0f;
+		bool m_HasFreeze = false;
+		float m_FreezeFromX = 0.0f;
+		float m_FreezeToX = 0.0f;
+	} m_Targets;
+	void UpdateRegionTargets();
+	int64_t m_DebugLaserNextPrintTime;
 };
 
 #endif

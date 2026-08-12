@@ -27,6 +27,8 @@ void CAutoFish::OnReset()
 	m_LockAimActive = false;
 	m_LockAimTarget = vec2(0, 0);
 	m_LockAimSavedZoom = 1.0f;
+
+	m_DebugLaserNextPrintTime = 0;
 }
 
 void CAutoFish::OnUpdate()
@@ -119,6 +121,101 @@ void CAutoFish::OnUpdate()
 	{
 		m_BuyBaitNextCheckTime = 0;
 	}
+
+	// 检测玩家上方 15x7 区域内的钓鱼目标（武士刀/解冻激光/霰弹枪激光）
+	UpdateRegionTargets();
+
+	// 节流输出检测结果（调试）
+	const int64_t Now = time_get();
+	if(Now >= m_DebugLaserNextPrintTime)
+	{
+		m_DebugLaserNextPrintTime = Now + time_freq() / 2;
+		if(m_Targets.m_Valid)
+		{
+			dbg_msg("ranbi/autofish", "targets katana=%s(%.0f) unfreeze=%s(%.0f) shotgun=%s(%.0f) freeze=%s(%.0f->%.0f)",
+				m_Targets.m_HasKatana ? "Y" : "N", m_Targets.m_KatanaX,
+				m_Targets.m_HasUnfreeze ? "Y" : "N", m_Targets.m_UnfreezeX,
+				m_Targets.m_HasShotgun ? "Y" : "N", m_Targets.m_ShotgunX,
+				m_Targets.m_HasFreeze ? "Y" : "N", m_Targets.m_FreezeFromX, m_Targets.m_FreezeToX);
+		}
+	}
+}
+
+// 检测玩家上方 15x7 区域内的钓鱼目标：武士刀（POWERUP_NINJA pickup）、解冻激光（旧 LASER）、霰弹枪激光（SHOTGUN）
+void CAutoFish::UpdateRegionTargets()
+{
+	m_Targets = SAutoFishTargets{};
+
+	const int Dummy = g_Config.m_ClDummy;
+	const int LocalId = GameClient()->m_aLocalIds[Dummy];
+	if(LocalId < 0 || LocalId >= MAX_CLIENTS || !GameClient()->m_aClients[LocalId].m_Active)
+		return;
+
+	const vec2 PlayerPos = GameClient()->m_LocalCharacterPos;
+	const int Tx = (int)std::floor(PlayerPos.x / 32.0f);
+	const int Ty = (int)std::floor(PlayerPos.y / 32.0f);
+	const float MinX = (Tx - 7) * 32.0f;
+	const float MaxX = (Tx + 8) * 32.0f;
+	const float MinY = (Ty - 7) * 32.0f;
+	const float MaxY = Ty * 32.0f;
+
+	const int Num = Client()->SnapNumItems(IClient::SNAP_CURRENT);
+	for(int i = 0; i < Num; i++)
+	{
+		const IClient::CSnapItem Item = Client()->SnapGetItem(IClient::SNAP_CURRENT, i);
+		switch(Item.m_Type)
+		{
+		case NETOBJTYPE_PICKUP:
+		case NETOBJTYPE_DDNETPICKUP:
+		{
+			const CNetObj_Pickup *pPickup = (const CNetObj_Pickup *)Item.m_pData;
+			if(pPickup->m_Type != POWERUP_NINJA)
+				break;
+			const vec2 Pos(pPickup->m_X, pPickup->m_Y);
+			if(Pos.x < MinX || Pos.x >= MaxX || Pos.y < MinY || Pos.y >= MaxY)
+				break;
+			m_Targets.m_KatanaX = Pos.x;
+			m_Targets.m_HasKatana = true;
+			break;
+		}
+		case NETOBJTYPE_LASER:
+		{
+			const CNetObj_Laser *pLaser = (const CNetObj_Laser *)Item.m_pData;
+			const vec2 From(pLaser->m_FromX, pLaser->m_FromY);
+			const vec2 To(pLaser->m_X, pLaser->m_Y);
+			const bool InFrom = From.x >= MinX && From.x < MaxX && From.y >= MinY && From.y < MaxY;
+			const bool InTo = To.x >= MinX && To.x < MaxX && To.y >= MinY && To.y < MaxY;
+			if(!InFrom && !InTo)
+				break;
+			m_Targets.m_UnfreezeX = To.x;
+			m_Targets.m_HasUnfreeze = true;
+			break;
+		}
+		case NETOBJTYPE_DDNETLASER:
+		{
+			const CNetObj_DDNetLaser *pLaser = (const CNetObj_DDNetLaser *)Item.m_pData;
+			const vec2 From(pLaser->m_FromX, pLaser->m_FromY);
+			const vec2 To(pLaser->m_ToX, pLaser->m_ToY);
+			const bool InFrom = From.x >= MinX && From.x < MaxX && From.y >= MinY && From.y < MaxY;
+			const bool InTo = To.x >= MinX && To.x < MaxX && To.y >= MinY && To.y < MaxY;
+			if(!InFrom && !InTo)
+				break;
+			if(pLaser->m_Type == LASERTYPE_SHOTGUN)
+			{
+				m_Targets.m_ShotgunX = To.x;
+				m_Targets.m_HasShotgun = true;
+			}
+			else if(pLaser->m_Type == LASERTYPE_FREEZE)
+			{
+				m_Targets.m_FreezeFromX = From.x;
+				m_Targets.m_FreezeToX = To.x;
+				m_Targets.m_HasFreeze = true;
+			}
+			break;
+		}
+		}
+	}
+	m_Targets.m_Valid = true;
 }
 
 // AUTO FISH m_RcLockAim：锁定光标瞄准的地图位置
