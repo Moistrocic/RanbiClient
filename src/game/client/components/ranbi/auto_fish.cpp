@@ -32,12 +32,18 @@ void CAutoFish::OnReset()
 
 void CAutoFish::OnUpdate()
 {
-	// 重新按住左键的待执行按下（FireRepress 的第二步）
-	if(m_FireRepressPending)
+	// 完整点击的状态推进：松开（本帧已写 0）→ 按下 → 松开，产生按下与释放两个边沿
+	if(m_FireClickPhase == EFireClickPhase::Released)
 	{
-		m_FireRepressPending = false;
 		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
 		m_FireInjected = true;
+		m_FireClickPhase = EFireClickPhase::Pressed;
+	}
+	else if(m_FireClickPhase == EFireClickPhase::Pressed)
+	{
+		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
+		m_FireInjected = false;
+		m_FireClickPhase = EFireClickPhase::None;
 	}
 
 	// AUTO FISH m_RcAutoAttack
@@ -209,7 +215,7 @@ void CAutoFish::FireHold()
 {
 	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
 	m_FireInjected = true;
-	m_FireRepressPending = false;
+	m_FireClickPhase = EFireClickPhase::None;
 }
 
 // 2. 模拟左键松开
@@ -217,16 +223,15 @@ void CAutoFish::FireRelease()
 {
 	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
 	m_FireInjected = false;
-	m_FireRepressPending = false;
+	m_FireClickPhase = EFireClickPhase::None;
 }
 
-// 3. 模拟重新按住左键（松开再按下，产生新的按下事件）
+// 3. 模拟重新按住左键（完整点击：松开→按下→松开，产生按下与释放两个边沿，抛竿监听任一边沿均有效）
 void CAutoFish::FireRepress()
 {
-	// 总是先松开一帧，下一帧 OnUpdate 开头再按下（0->1 产生按下事件，保证抛竿有效）
 	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
 	m_FireInjected = false;
-	m_FireRepressPending = true;
+	m_FireClickPhase = EFireClickPhase::Released; // 下一帧按下，再下一帧松开
 }
 
 // 自动钓鱼：用左键模拟把武士刀稳定在解冻激光与霰弹枪激光的中间位置
@@ -424,9 +429,13 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 		int Price = 0;
 		if(ConsoleTriggerCheck("chat/server", "[钓鱼] 钓到%s x1，价值 %d 币", aFish, &Price))
 		{
-			m_FishingActive = false;
+			// 诊断：对照解析价格并输出原始消息，定位价格解析异常
+			int CheckPrice = -1;
+			ConsoleTriggerCheck("chat/server", "价值 %d 币", &CheckPrice);
+			dbg_msg("ranbi/autofish", "caught '%s' +%d coins (check %d), total %lld, recasting, raw='%s'",
+				aFish, Price, CheckPrice, m_TotalFishCoins, m_CurrentChatText.c_str());
 			m_TotalFishCoins += Price;
-			dbg_msg("ranbi/autofish", "caught '%s' +%d coins, total %lld, recasting", aFish, Price, m_TotalFishCoins);
+			m_FishingActive = false;
 			CastRod();
 		}
 	}
