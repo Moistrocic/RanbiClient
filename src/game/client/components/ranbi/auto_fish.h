@@ -79,6 +79,13 @@ private:
 	} m_Targets;
 	void UpdateRegionTargets();
 	int64_t m_DebugLaserNextPrintTime;
+	// 左键模拟与自动钓鱼控制（rc_auto_fishing）
+	bool m_FireInjected = false;
+	bool m_FireRepressPending = false;
+	void FireHold();
+	void FireRelease();
+	void FireRepress();
+	void UpdateAutoFishing();
 };
 
 #endif

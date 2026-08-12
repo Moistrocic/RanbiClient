@@ -33,6 +33,14 @@ void CAutoFish::OnReset()
 
 void CAutoFish::OnUpdate()
 {
+	// 重新按住左键的待执行按下（FireRepress 的第二步）
+	if(m_FireRepressPending)
+	{
+		m_FireRepressPending = false;
+		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
+		m_FireInjected = true;
+	}
+
 	// AUTO FISH m_RcAutoAttack
 	if(g_Config.m_RcAutoAttack)
 	{
@@ -109,7 +117,7 @@ void CAutoFish::OnUpdate()
 						break;
 					}
 				}
-				m_BuyBaitNextCheckTime = Now + time_freq() * g_Config.m_RcAutoBuyBaitInterval;
+				m_BuyBaitNextCheckTime = Now + time_freq() * 30; // 固定 30 秒检查一次
 			}
 		}
 		else
@@ -124,6 +132,9 @@ void CAutoFish::OnUpdate()
 
 	// 检测玩家上方 15x7 区域内的钓鱼目标（武士刀/解冻激光/霰弹枪激光）
 	UpdateRegionTargets();
+
+	// 自动钓鱼控制（用左键模拟把武士刀稳定在解冻激光与霰弹枪激光中间）
+	UpdateAutoFishing();
 
 	// 节流输出检测结果（调试）
 	const int64_t Now = time_get();
@@ -217,6 +228,76 @@ void CAutoFish::UpdateRegionTargets()
 		}
 	}
 	m_Targets.m_Valid = true;
+}
+
+// 1. 模拟左键按住（持续，不能松开）
+void CAutoFish::FireHold()
+{
+	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
+	m_FireInjected = true;
+	m_FireRepressPending = false;
+}
+
+// 2. 模拟左键松开
+void CAutoFish::FireRelease()
+{
+	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
+	m_FireInjected = false;
+	m_FireRepressPending = false;
+}
+
+// 3. 模拟重新按住左键（松开再按下，产生新的按下事件）
+void CAutoFish::FireRepress()
+{
+	if(m_FireInjected)
+	{
+		// 当前按住：本帧先松开，下一帧 OnUpdate 开头再按下（0->1 产生按下事件）
+		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
+		m_FireInjected = false;
+		m_FireRepressPending = true;
+	}
+	else
+	{
+		// 当前已松开：直接按下
+		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
+		m_FireInjected = true;
+	}
+}
+
+// 自动钓鱼：用左键模拟把武士刀稳定在解冻激光与霰弹枪激光的中间位置
+// 按住左键 → 武士刀向右；松开 → 向左回落。允许小幅度波动，边界强制回拉
+void CAutoFish::UpdateAutoFishing()
+{
+	if(!g_Config.m_RcAutoFishing)
+		return;
+	if(!m_Targets.m_Valid || !m_Targets.m_HasKatana || !m_Targets.m_HasUnfreeze || !m_Targets.m_HasShotgun)
+		return;
+
+	const float MinX = m_Targets.m_UnfreezeX;
+	const float MaxX = m_Targets.m_ShotgunX;
+	if(MaxX <= MinX)
+		return;
+
+	const float Mid = (MinX + MaxX) * 0.5f;
+	constexpr float Tolerance = 16.0f; // 允许波动范围（半格）
+
+	// 边界保护：接近边界时强制反向（不能小于解冻激光或大于霰弹枪激光）
+	if(m_Targets.m_KatanaX <= MinX + 16.0f)
+	{
+		FireHold();
+		return;
+	}
+	if(m_Targets.m_KatanaX >= MaxX - 16.0f)
+	{
+		FireRelease();
+		return;
+	}
+
+	// 中间控制：偏左按住向右拉，偏右松开向左回落，死区内保持当前状态
+	if(m_Targets.m_KatanaX < Mid - Tolerance)
+		FireHold();
+	else if(m_Targets.m_KatanaX > Mid + Tolerance)
+		FireRelease();
 }
 
 // AUTO FISH m_RcLockAim：锁定光标瞄准的地图位置

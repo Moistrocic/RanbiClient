@@ -83,4 +83,5 @@ MACRO_CONFIG_INT(RcAutoAttackInterval, rc_auto_attack_interval, 200, 50, 1000, C
 
 MACRO_CONFIG_INT(RcAutoBuyBait, rc_auto_buy_bait, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcLockAim, rc_lock_aim, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
-MACRO_CONFIG_INT(RcAutoBuyBaitInterval, rc_auto_buy_bait_interval, 30, 10, 60, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAutoFishing, rc_auto_fishing, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+MACRO_CONFIG_INT(RcAutoFishStopOutOfRange, rc_auto_fish_stop_out_of_range, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
