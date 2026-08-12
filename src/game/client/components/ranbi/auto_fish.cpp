@@ -398,6 +398,11 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 			dbg_msg("ranbi/autofish", "caught '%s' +%d coins, total %lld, recasting", aFish, Price, m_TotalFishCoins);
 			CastRod();
 		}
+		else if(ConsoleTriggerCheck("chat/server", "[钓鱼] 张力进入红色区域，鱼脱钩逃跑了。"))
+		{
+			m_FishingActive = false;
+			CastRod();
+		}
 	}
 
 	// 规则 3/4/6 已移除：鱼饵购买改为出杆成功 1 秒后执行 + 出杆重试时补买（受 rc_auto_buy_bait 开关控制）
