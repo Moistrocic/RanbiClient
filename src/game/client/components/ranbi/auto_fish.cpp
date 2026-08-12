@@ -212,19 +212,10 @@ void CAutoFish::FireRelease()
 // 3. 模拟重新按住左键（松开再按下，产生新的按下事件）
 void CAutoFish::FireRepress()
 {
-	if(m_FireInjected)
-	{
-		// 当前按住：本帧先松开，下一帧 OnUpdate 开头再按下（0->1 产生按下事件）
-		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
-		m_FireInjected = false;
-		m_FireRepressPending = true;
-	}
-	else
-	{
-		// 当前已松开：直接按下
-		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
-		m_FireInjected = true;
-	}
+	// 总是先松开一帧，下一帧 OnUpdate 开头再按下（0->1 产生按下事件，保证抛竿有效）
+	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
+	m_FireInjected = false;
+	m_FireRepressPending = true;
 }
 
 // 自动钓鱼：用左键模拟把武士刀稳定在解冻激光与霰弹枪激光的中间位置
@@ -426,14 +417,23 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 		}
 	}
 
-	// 规则 3：购买鱼饵成功 → 当前数量不足时继续购买（受 rc_auto_buy_bait 开关控制）
+	// 规则 3：购买鱼饵成功 → 不足继续买到满，买满后重新出钩（受 rc_auto_buy_bait 开关控制）
 	{
 		int Bought = 0, Cur = 0, Max = 0;
 		if(ConsoleTriggerCheck("chat/server", "[商店] 购买鱼饵成功 %d 个，当前 %d/%d 个", &Bought, &Cur, &Max))
 		{
-			dbg_msg("ranbi/autofish", "bait bought: %d/%d", Cur, Max);
-			if(g_Config.m_RcAutoBuyBait && Cur < Max)
-				BuyBaitOnce();
+			dbg_msg("ranbi/autofish", "bait bought: %d/%d (bought %d)", Cur, Max, Bought);
+			if(g_Config.m_RcAutoBuyBait)
+			{
+				if(Cur < Max)
+					BuyBaitOnce(); // 继续买到满
+				else
+					CastRod(); // 买满后重新出钩
+			}
+			else
+			{
+				CastRod();
+			}
 		}
 	}
 
