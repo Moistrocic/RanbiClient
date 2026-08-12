@@ -642,6 +642,7 @@ bool CAutoFish::ConsoleTriggerCheck(const char *pCategory, const char *pPattern,
 		case EConsoleTriggerType::Int:
 		{
 			int *pOut = va_arg(ap, int *);
+			dbg_msg("ranbi/autofish", "dbg-int captured='%s' base=%d", Captured.c_str(), m_vConsoleTriggerBases[i]);
 			*pOut = (int)str_toint64_base(Captured.c_str(), m_vConsoleTriggerBases[i]);
 			break;
 		}
