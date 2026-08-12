@@ -279,15 +279,16 @@ void CAutoFish::UpdateAutoFishing()
 		return;
 
 	const float Mid = (MinX + MaxX) * 0.5f;
-	constexpr float Tolerance = 16.0f; // 允许波动范围（半格）
+	constexpr float Tolerance = 8.0f; // 中间死区：允许波动范围（1/4 格）
+	constexpr float BoundaryMargin = 24.0f; // 边界保护触发距离（3/4 格，吸收松开过冲与鱼挣扎）
 
 	// 边界保护：接近边界时强制反向（不能小于解冻激光或大于霰弹枪激光）
-	if(m_Targets.m_KatanaX <= MinX + 16.0f)
+	if(m_Targets.m_KatanaX <= MinX + BoundaryMargin)
 	{
 		FireHold();
 		return;
 	}
-	if(m_Targets.m_KatanaX >= MaxX - 16.0f)
+	if(m_Targets.m_KatanaX >= MaxX - BoundaryMargin)
 	{
 		FireRelease();
 		return;
