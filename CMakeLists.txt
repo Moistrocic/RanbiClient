@@ -2599,6 +2599,8 @@ if(CLIENT)
     components/race_demo.h
     components/ranbi/ai_client.cpp
     components/ranbi/ai_client.h
+    components/ranbi/auto_fish.cpp
+    components/ranbi/auto_fish.h
     components/ranbi/menus_ranbi.cpp
     components/ranbi/points.cpp
     components/ranbi/points.h

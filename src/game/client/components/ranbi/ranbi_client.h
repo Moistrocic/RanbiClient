@@ -53,7 +53,6 @@ public:
 	void OnConsoleInit() override;
 	void OnUpdate() override;
 	void OnReset() override;
-	void OnRender() override;
 
 	SCollisionSkinInfo m_LastCollisionSkin;
 
@@ -61,13 +60,6 @@ public:
 
 private:
 	int m_aLastSkinChangeTick[NUM_DUMMIES];
-	int64_t m_aAttackNextPressTime[NUM_DUMMIES];
-	int64_t m_aAttackPressEndTime[NUM_DUMMIES];
-	bool m_aAttackFireInjected[NUM_DUMMIES];
-	int64_t m_BuyBaitNextCheckTime;
-	bool m_LockAimActive;
-	vec2 m_LockAimTarget;
-	float m_LockAimSavedZoom;
 	static void ConAddWeaponAngle(IConsole::IResult *pResult, void *pUserData);
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 };

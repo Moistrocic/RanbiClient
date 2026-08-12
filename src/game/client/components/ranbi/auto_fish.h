@@ -1,0 +1,69 @@
+#ifndef GAME_CLIENT_COMPONENTS_RANBI_AUTO_FISH_H
+#define GAME_CLIENT_COMPONENTS_RANBI_AUTO_FISH_H
+
+#include <base/vmath.h>
+
+#include <engine/client/enums.h>
+#include <engine/console.h>
+#include <engine/shared/protocol.h>
+
+#include <generated/protocol7.h>
+
+#include <game/client/component.h>
+
+#include <regex>
+#include <string>
+#include <vector>
+
+// Auto fish 功能组件：自动攻击、自动购买鱼饵、光标锁定、控制台信息检测
+class CAutoFish : public CComponent
+{
+public:
+	CAutoFish();
+	int Sizeof() const override { return sizeof(*this); }
+
+	void OnUpdate() override;
+	void OnReset() override;
+	void OnRender() override;
+	void OnMessage(int Msg, void *pRawMsg) override;
+
+private:
+	// 自动攻击（rc_auto_attack / rc_auto_attack_interval）
+	int64_t m_aAttackNextPressTime[NUM_DUMMIES];
+	int64_t m_aAttackPressEndTime[NUM_DUMMIES];
+	bool m_aAttackFireInjected[NUM_DUMMIES];
+	// 自动购买鱼饵（rc_auto_buy_bait / rc_auto_buy_bait_interval）
+	int64_t m_BuyBaitNextCheckTime;
+	// 光标锁定（rc_lock_aim）
+	bool m_LockAimActive;
+	vec2 m_LockAimTarget;
+	float m_LockAimSavedZoom;
+	// 控制台信息检测（OnMessage 记录当前消息，ConsoleTriggerCheck 按类别+模式匹配并返回捕获值，仿 scanf 格式符）
+	enum class EConsoleTriggerType : char
+	{
+		String,
+		Char,
+		Short,
+		Int,
+		Long,
+		LongLong,
+		UShort,
+		UInt,
+		ULong,
+		ULongLong,
+		SizeT,
+		Float,
+		Double,
+		LongDouble,
+	};
+	std::string m_CurrentChatCategory;
+	std::string m_CurrentChatText;
+	std::regex m_ConsoleTriggerRegex;
+	std::string m_ConsoleTriggerPatternCache;
+	std::vector<EConsoleTriggerType> m_vConsoleTriggerFormats;
+	std::vector<int> m_vConsoleTriggerBases;
+	bool ConsoleTriggerCheck(const char *pCategory, const char *pPattern, ...);
+	bool ConsoleTriggerBuildRegex(const char *pPattern);
+};
+
+#endif

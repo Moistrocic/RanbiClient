@@ -60,6 +60,7 @@
 #include "components/players.h"
 #include "components/race_demo.h"
 #include "components/ranbi/ai_client.h"
+#include "components/ranbi/auto_fish.h"
 #include "components/ranbi/points.h"
 #include "components/ranbi/ranbi_client.h"
 #include "components/ranbi/render_proxy.h"
@@ -242,6 +243,7 @@ public:
 
 	// RanbiClient Components
 	CAiClient m_AiClient;
+	CAutoFish m_AutoFish;
 	CRanbiClient m_RanbiClient;
 	CRenderProxy m_RenderProxy;
 	CPoints m_Points;
