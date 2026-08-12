@@ -214,11 +214,10 @@ void CAutoFish::UpdateAutoFishing()
 		FireRelease();
 }
 
-// 出钩（抛竿）：先购买一次鱼饵（开启自动买饵时），再执行重新按住左键，并激活每秒重试直到收到"已抛竿"
+// 出钩（抛竿）：执行重新按住左键，并激活每秒重试直到收到"已抛竿"
+// 注：首次出杆不购买鱼饵（购买在出杆成功后进行，重试时补买作为保险）
 void CAutoFish::CastRod()
 {
-	if(g_Config.m_RcAutoBuyBait)
-		BuyBaitOnce();
 	m_CastRetryCount = 0;
 	FireRepress();
 	m_CastActive = true;
@@ -385,11 +384,13 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 
 	// 规则 3/4/6 已移除：鱼饵购买改为出钩前执行（见 CastRod，受 rc_auto_buy_bait 开关控制）
 
-	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数
+	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数；出杆成功后购买鱼饵（为下次出杆备饵）
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))
 	{
 		m_CastActive = false;
 		m_CastRetryCount = 0;
+		if(g_Config.m_RcAutoBuyBait)
+			BuyBaitOnce();
 	}
 }
 
