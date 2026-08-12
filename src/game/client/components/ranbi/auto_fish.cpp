@@ -572,7 +572,7 @@ bool CAutoFish::ConsoleTriggerBuildRegex(const char *pPattern)
 			case 5: Type = EConsoleTriggerType::LongDouble; break;
 			default: Type = EConsoleTriggerType::Float; break;
 			}
-			pRegex = "(-?[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?)";
+			pRegex = "(-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)"; // 内层用非捕获组，保证只产生 1 个捕获组
 			break;
 		case '%':
 			Escaped += '%';
@@ -585,9 +585,8 @@ bool CAutoFish::ConsoleTriggerBuildRegex(const char *pPattern)
 			continue;
 		}
 
-		Escaped += '(';
+		// pRegex 已含捕获括号，直接拼接（不可再包裹，否则产生嵌套捕获组导致 Match 索引错位）
 		Escaped += pRegex;
-		Escaped += ')';
 		m_vConsoleTriggerFormats.push_back(Type);
 		m_vConsoleTriggerBases.push_back(Base);
 		p = pConv + 1;
@@ -648,7 +647,6 @@ bool CAutoFish::ConsoleTriggerCheck(const char *pCategory, const char *pPattern,
 		case EConsoleTriggerType::Int:
 		{
 			int *pOut = va_arg(ap, int *);
-			dbg_msg("ranbi/autofish", "dbg-int captured='%s' base=%d", Captured.c_str(), m_vConsoleTriggerBases[i]);
 			*pOut = (int)str_toint64_base(Captured.c_str(), m_vConsoleTriggerBases[i]);
 			break;
 		}
