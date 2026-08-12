@@ -78,9 +78,6 @@ MACRO_CONFIG_INT(RcAiContextCount, rc_ai_context_count, 5, 0, 20, CFGFLAG_CLIENT
 
 MACRO_CONFIG_STR(RcAiSystemPrompt, rc_ai_system_prompt, 512, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
-MACRO_CONFIG_INT(RcAutoAttack, rc_auto_attack, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
-MACRO_CONFIG_INT(RcAutoAttackInterval, rc_auto_attack_interval, 200, 50, 1000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
-
 MACRO_CONFIG_INT(RcAutoBuyBait, rc_auto_buy_bait, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcLockAim, rc_lock_aim, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(RcAutoFishing, rc_auto_fishing, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")

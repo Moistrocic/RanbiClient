@@ -228,8 +228,7 @@ int CControls::SnapInput(int *pData)
 	m_aLastData[g_Config.m_ClDummy].m_PlayerFlags = m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
 	// we freeze the input if chat or menu is activated
-	// RANBICLIENT m_RcAutoAttack：自动攻击开启时禁用输入冻结（冻结会重置/低频发送注入的开火输入）
-	if(!(m_aInputData[g_Config.m_ClDummy].m_PlayerFlags & PLAYERFLAG_PLAYING) && !g_Config.m_RcAutoAttack)
+	if(!(m_aInputData[g_Config.m_ClDummy].m_PlayerFlags & PLAYERFLAG_PLAYING))
 	{
 		if(!GameClient()->m_GameInfo.m_BugDDRaceInput)
 			ResetInput(g_Config.m_ClDummy);

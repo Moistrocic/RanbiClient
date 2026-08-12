@@ -15,14 +15,6 @@ CAutoFish::CAutoFish()
 
 void CAutoFish::OnReset()
 {
-	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
-	{
-		m_aAttackNextPressTime[Dummy] = 0;
-		m_aAttackPressEndTime[Dummy] = 0;
-		m_aAttackFireInjected[Dummy] = false;
-	}
-
-
 	m_LockAimActive = false;
 	m_LockAimTarget = vec2(0, 0);
 	m_LockAimSavedZoom = 1.0f;
@@ -42,61 +34,6 @@ void CAutoFish::OnUpdate()
 			m_FireRepressPending = false;
 			FireHold(); // 松开足够时长后按下，产生可靠的 0->1 边沿
 		}
-	}
-
-	// AUTO FISH m_RcAutoAttack
-	if(g_Config.m_RcAutoAttack)
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		const int LocalId = GameClient()->m_aLocalIds[Dummy];
-		if(LocalId >= 0 && LocalId < MAX_CLIENTS && GameClient()->m_aClients[LocalId].m_Active &&
-			!GameClient()->m_Snap.m_SpecInfo.m_Active)
-		{
-			const int64_t Now = time_get();
-			if(m_aAttackNextPressTime[Dummy] == 0)
-			{
-				m_aAttackNextPressTime[Dummy] = Now;
-				m_aAttackPressEndTime[Dummy] = 0;
-			}
-			if(Now >= m_aAttackPressEndTime[Dummy])
-			{
-				GameClient()->m_Controls.m_aInputData[Dummy].m_Fire = 0;
-				m_aAttackFireInjected[Dummy] = false;
-			}
-			if(Now >= m_aAttackNextPressTime[Dummy])
-			{
-				GameClient()->m_Controls.m_aInputData[Dummy].m_Fire = 1;
-				m_aAttackFireInjected[Dummy] = true;
-				m_aAttackNextPressTime[Dummy] = Now + time_freq() * g_Config.m_RcAutoAttackInterval / 1000;
-				m_aAttackPressEndTime[Dummy] = Now + time_freq() * 40 / 1000;
-			}
-		}
-		else
-		{
-			if(LocalId >= 0 && LocalId < MAX_CLIENTS && m_aAttackFireInjected[Dummy])
-			{
-				int &Fire = GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
-				if((Fire & 1) != 0)
-					Fire++;
-				m_aAttackFireInjected[Dummy] = false;
-			}
-			m_aAttackNextPressTime[Dummy] = 0;
-			m_aAttackPressEndTime[Dummy] = 0;
-		}
-	}
-	else
-	{
-		const int Dummy = g_Config.m_ClDummy;
-		const int LocalId = GameClient()->m_aLocalIds[Dummy];
-		if(LocalId >= 0 && LocalId < MAX_CLIENTS && m_aAttackFireInjected[Dummy])
-		{
-			int &Fire = GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
-			if((Fire & 1) != 0)
-				Fire++;
-			m_aAttackFireInjected[Dummy] = false;
-		}
-		m_aAttackNextPressTime[Dummy] = 0;
-		m_aAttackPressEndTime[Dummy] = 0;
 	}
 
 	// AUTO FISH m_RcAutoBuyBait：不再定时轮询，改为由控制台消息驱动（规则 3/4，见 OnMessage）

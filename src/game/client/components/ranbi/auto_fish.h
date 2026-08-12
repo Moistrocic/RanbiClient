@@ -28,10 +28,6 @@ public:
 	void OnMessage(int Msg, void *pRawMsg) override;
 
 private:
-	// 自动攻击（rc_auto_attack / rc_auto_attack_interval）
-	int64_t m_aAttackNextPressTime[NUM_DUMMIES];
-	int64_t m_aAttackPressEndTime[NUM_DUMMIES];
-	bool m_aAttackFireInjected[NUM_DUMMIES];
 	// 自动购买鱼饵（rc_auto_buy_bait，由控制台消息驱动，见 OnMessage 规则 3/4）
 	// 光标锁定（rc_lock_aim）
 	bool m_LockAimActive;
