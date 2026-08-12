@@ -89,6 +89,7 @@ private:
 	bool m_FishingActive = false; // 鱼上钩后激活收线控制
 	bool m_CastActive = false; // 出钩后等待"已抛竿"，超时每秒重试
 	int64_t m_CastNextTime = 0;
+	int m_CastRetryCount = 0; // 当前出钩周期内的重试次数（成功抛竿后清零）
 	int64_t m_TotalFishCoins = 0; // 累计钓获币值
 	void CastRod();
 	void BuyBaitOnce();

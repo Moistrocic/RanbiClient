@@ -110,6 +110,16 @@ void CAutoFish::OnUpdate()
 	// 出钩重试：出钩后未收到"已抛竿"确认，每秒重新出钩（放末尾避免被收线注入覆盖）
 	if(m_CastActive && time_get() >= m_CastNextTime)
 	{
+		m_CastRetryCount++;
+		// 成功抛竿前重试超过 10 次：判为异常行为，自动关闭自动钓鱼（受异常终止开关控制）
+		if(m_CastRetryCount > 10 && g_Config.m_RcAutoFishStopOutOfRange)
+		{
+			g_Config.m_RcAutoFishing = 0;
+			m_FishingActive = false;
+			m_CastActive = false;
+			dbg_msg("ranbi/autofish", "cast retry >10 times without success, auto fishing stopped");
+			return;
+		}
 		dbg_msg("ranbi/autofish", "cast retry");
 		FireRepress();
 		m_CastNextTime = time_get() + time_freq();
@@ -263,6 +273,7 @@ void CAutoFish::CastRod()
 {
 	if(g_Config.m_RcAutoBuyBait)
 		BuyBaitOnce();
+	m_CastRetryCount = 0;
 	FireRepress();
 	m_CastActive = true;
 	m_CastNextTime = time_get() + time_freq();
@@ -422,10 +433,11 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 
 	// 规则 3/4/6 已移除：鱼饵购买改为出钩前执行（见 CastRod，受 rc_auto_buy_bait 开关控制）
 
-	// 规则 5：已抛竿 → 停止出钩重试
+	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))
 	{
 		m_CastActive = false;
+		m_CastRetryCount = 0;
 	}
 }
 
