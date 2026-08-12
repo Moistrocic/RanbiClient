@@ -118,6 +118,7 @@ void CAutoFish::UpdateRegionTargets()
 			const CNetObj_Pickup *pPickup = (const CNetObj_Pickup *)Item.m_pData;
 			if(pPickup->m_Type != POWERUP_NINJA)
 				break;
+			// 注：pickup 为点实体，无方向/长度属性，无法做垂直判断（钓鱼进度实体，依赖区域过滤）
 			const vec2 Pos(pPickup->m_X, pPickup->m_Y);
 			if(Pos.x < MinX || Pos.x >= MaxX || Pos.y < MinY || Pos.y >= MaxY)
 				break;
@@ -130,6 +131,9 @@ void CAutoFish::UpdateRegionTargets()
 			const CNetObj_Laser *pLaser = (const CNetObj_Laser *)Item.m_pData;
 			const vec2 From(pLaser->m_FromX, pLaser->m_FromY);
 			const vec2 To(pLaser->m_X, pLaser->m_Y);
+			// 解冻激光必须垂直（x 相同）且 y 方向长度至少 1 格，排除非垂直干扰
+			if(std::fabs(To.x - From.x) > 1.0f || std::fabs(To.y - From.y) < 32.0f)
+				break;
 			const bool InFrom = From.x >= MinX && From.x < MaxX && From.y >= MinY && From.y < MaxY;
 			const bool InTo = To.x >= MinX && To.x < MaxX && To.y >= MinY && To.y < MaxY;
 			if(!InFrom && !InTo)
@@ -153,6 +157,9 @@ void CAutoFish::UpdateRegionTargets()
 				break;
 			if(pLaser->m_Type == LASERTYPE_SHOTGUN)
 			{
+				// 霰弹枪激光必须垂直（x 相同）且 y 方向长度至少 1 格，排除非垂直干扰
+				if(std::fabs(To.x - From.x) > 1.0f || std::fabs(To.y - From.y) < 32.0f)
+					break;
 				m_Targets.m_ShotgunX = To.x;
 				m_Targets.m_HasShotgun = true;
 			}
