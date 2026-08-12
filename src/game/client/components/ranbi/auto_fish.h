@@ -80,13 +80,7 @@ private:
 	int64_t m_DebugLaserNextPrintTime;
 	// 左键模拟与自动钓鱼控制（rc_auto_fishing）
 	bool m_FireInjected = false;
-	enum class EFireClickPhase : char
-	{
-		None,
-		Released, // 点击第 1 步：已松开，等待按下
-		Pressed, // 点击第 2 步：已按下，等待松开
-	};
-	EFireClickPhase m_FireClickPhase = EFireClickPhase::None;
+	bool m_FireRepressPending = false; // FireRepress 的第二步：下一帧执行 FireHold
 	void FireHold();
 	void FireRelease();
 	void FireRepress();

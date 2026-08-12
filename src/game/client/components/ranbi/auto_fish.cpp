@@ -32,18 +32,11 @@ void CAutoFish::OnReset()
 
 void CAutoFish::OnUpdate()
 {
-	// 完整点击的状态推进：松开（本帧已写 0）→ 按下 → 松开，产生按下与释放两个边沿
-	if(m_FireClickPhase == EFireClickPhase::Released)
+	// FireRepress 的第二步：先松开（FireRelease）后按下并保持（FireHold）
+	if(m_FireRepressPending)
 	{
-		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
-		m_FireInjected = true;
-		m_FireClickPhase = EFireClickPhase::Pressed;
-	}
-	else if(m_FireClickPhase == EFireClickPhase::Pressed)
-	{
-		GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
-		m_FireInjected = false;
-		m_FireClickPhase = EFireClickPhase::None;
+		m_FireRepressPending = false;
+		FireHold();
 	}
 
 	// AUTO FISH m_RcAutoAttack
@@ -123,6 +116,7 @@ void CAutoFish::OnUpdate()
 			g_Config.m_RcAutoFishing = 0;
 			m_FishingActive = false;
 			m_CastActive = false;
+			FireRelease();
 			dbg_msg("ranbi/autofish", "cast retry >10 times without success, auto fishing stopped");
 			return;
 		}
@@ -215,7 +209,6 @@ void CAutoFish::FireHold()
 {
 	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
 	m_FireInjected = true;
-	m_FireClickPhase = EFireClickPhase::None;
 }
 
 // 2. 模拟左键松开
@@ -223,15 +216,13 @@ void CAutoFish::FireRelease()
 {
 	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
 	m_FireInjected = false;
-	m_FireClickPhase = EFireClickPhase::None;
 }
 
-// 3. 模拟重新按住左键（完整点击：松开→按下→松开，产生按下与释放两个边沿，抛竿监听任一边沿均有效）
+// 3. 模拟重新按住左键：先执行 FireRelease（本帧松开），下一帧执行 FireHold（按下并保持）
 void CAutoFish::FireRepress()
 {
-	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 0;
-	m_FireInjected = false;
-	m_FireClickPhase = EFireClickPhase::Released; // 下一帧按下，再下一帧松开
+	FireRelease();
+	m_FireRepressPending = true;
 }
 
 // 自动钓鱼：用左键模拟把武士刀稳定在解冻激光与霰弹枪激光的中间位置
@@ -324,6 +315,7 @@ void CAutoFish::CheckAbnormalStop()
 		g_Config.m_RcAutoFishing = 0;
 		m_FishingActive = false;
 		m_CastActive = false;
+		FireRelease();
 		dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles), auto fishing stopped", PlayerCursorDist);
 	}
 }
