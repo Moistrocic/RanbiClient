@@ -15,10 +15,22 @@ CAutoFish::CAutoFish()
 
 void CAutoFish::OnReset()
 {
+	// 光标锁定
 	m_LockAimActive = false;
 	m_LockAimTarget = vec2(0, 0);
 	m_LockAimSavedZoom = 1.0f;
 
+	// 左键模拟与自动钓鱼状态机
+	m_FireInjected = false;
+	m_FireRepressPending = false;
+	m_FireRepressReleaseUntil = 0;
+	m_FishingActive = false;
+	m_CastActive = false;
+	m_CastNextTime = 0;
+	m_CastRetryCount = 0;
+	m_TotalFishCoins = 0;
+	m_BaitBuyDelayUntil = 0;
+	m_Targets = SAutoFishTargets{};
 }
 
 void CAutoFish::OnUpdate()
@@ -34,9 +46,6 @@ void CAutoFish::OnUpdate()
 			FireHold(); // 松开足够时长后按下，产生可靠的 0->1 边沿
 		}
 	}
-
-	// AUTO FISH m_RcAutoBuyBait：不再定时轮询，改为由控制台消息驱动（规则 3/4，见 OnMessage）
-	// 菜单开关 rc_auto_buy_bait 作为消息驱动购买的开关
 
 	// 检测玩家上方 15x7 区域内的钓鱼目标（武士刀/解冻激光/霰弹枪激光）
 	UpdateRegionTargets();
@@ -65,6 +74,7 @@ void CAutoFish::OnUpdate()
 			g_Config.m_RcAutoFishing = 0;
 			m_FishingActive = false;
 			m_CastActive = false;
+			m_BaitBuyDelayUntil = 0;
 			FireRelease();
 			dbg_msg("ranbi/autofish", "cast retry >10 times without success, auto fishing stopped");
 			return;
@@ -276,6 +286,7 @@ void CAutoFish::CheckAbnormalStop()
 		g_Config.m_RcAutoFishing = 0;
 		m_FishingActive = false;
 		m_CastActive = false;
+		m_BaitBuyDelayUntil = 0;
 		FireRelease();
 		dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles), auto fishing stopped", PlayerCursorDist);
 	}
