@@ -125,6 +125,9 @@ void CAutoFish::OnUpdate()
 			dbg_msg("ranbi/autofish", "cast retry >10 times without success, auto fishing stopped");
 			return;
 		}
+		// 重试前同样补一次鱼饵（开启自动买饵时）
+		if(g_Config.m_RcAutoBuyBait)
+			BuyBaitOnce();
 		dbg_msg("ranbi/autofish", "cast retry");
 		FireRepress();
 		m_CastNextTime = time_get() + time_freq();
@@ -285,14 +288,19 @@ void CAutoFish::CastRod()
 void CAutoFish::BuyBaitOnce()
 {
 	int OptionId = 0;
+	bool Found = false;
 	for(const CVoteOptionClient *pOption = GameClient()->m_Voting.FirstOption(); pOption; pOption = pOption->m_pNext, OptionId++)
 	{
 		if(str_find_nocase(pOption->m_aDescription, "购买鱼饵"))
 		{
+			Found = true;
 			GameClient()->m_Voting.CallvoteOption(OptionId, "", false);
+			dbg_msg("ranbi/autofish", "buy bait: vote option %d", OptionId);
 			break;
 		}
 	}
+	if(!Found)
+		dbg_msg("ranbi/autofish", "buy bait: no matching vote option (total %d)", OptionId);
 }
 
 // 异常状态检查：玩家与准星在地图坐标距离超过 20 格时自动关闭自动钓鱼
@@ -427,13 +435,9 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 		int Price = 0;
 		if(ConsoleTriggerCheck("chat/server", "[钓鱼] 钓到%s x1，价值 %d 币", aFish, &Price))
 		{
-			// 诊断：对照解析价格并输出原始消息，定位价格解析异常
-			int CheckPrice = -1;
-			ConsoleTriggerCheck("chat/server", "价值 %d 币", &CheckPrice);
-			dbg_msg("ranbi/autofish", "caught '%s' +%d coins (check %d), total %lld, recasting, raw='%s'",
-				aFish, Price, CheckPrice, m_TotalFishCoins, m_CurrentChatText.c_str());
-			m_TotalFishCoins += Price;
 			m_FishingActive = false;
+			m_TotalFishCoins += Price;
+			dbg_msg("ranbi/autofish", "caught '%s' +%d coins, total %lld, recasting", aFish, Price, m_TotalFishCoins);
 			CastRod();
 		}
 	}
