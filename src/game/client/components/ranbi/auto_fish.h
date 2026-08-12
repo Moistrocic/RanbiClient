@@ -80,7 +80,8 @@ private:
 	int64_t m_DebugLaserNextPrintTime;
 	// 左键模拟与自动钓鱼控制（rc_auto_fishing）
 	bool m_FireInjected = false;
-	bool m_FireRepressPending = false; // FireRepress 的第二步：下一帧执行 FireHold
+	bool m_FireRepressPending = false; // FireRepress 进行中（松开保持阶段）
+	int64_t m_FireRepressReleaseUntil = 0; // 松开保持到的时刻（须覆盖服务器 40ms tick）
 	void FireHold();
 	void FireRelease();
 	void FireRepress();

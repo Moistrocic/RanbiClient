@@ -32,11 +32,16 @@ void CAutoFish::OnReset()
 
 void CAutoFish::OnUpdate()
 {
-	// FireRepress 的第二步：先松开（FireRelease）后按下并保持（FireHold）
+	// FireRepress：先松开并保持足够时长（覆盖服务器 40ms tick），再按下（FireHold）
 	if(m_FireRepressPending)
 	{
-		m_FireRepressPending = false;
-		FireHold();
+		if(time_get() < m_FireRepressReleaseUntil)
+			FireRelease(); // 松开保持中
+		else
+		{
+			m_FireRepressPending = false;
+			FireHold(); // 松开足够时长后按下，产生可靠的 0->1 边沿
+		}
 	}
 
 	// AUTO FISH m_RcAutoAttack
@@ -218,11 +223,12 @@ void CAutoFish::FireRelease()
 	m_FireInjected = false;
 }
 
-// 3. 模拟重新按住左键：先执行 FireRelease（本帧松开），下一帧执行 FireHold（按下并保持）
+// 3. 模拟重新按住左键：先执行 FireRelease（松开并保持 80ms，覆盖服务器 40ms tick），再执行 FireHold（按下并保持）
 void CAutoFish::FireRepress()
 {
 	FireRelease();
 	m_FireRepressPending = true;
+	m_FireRepressReleaseUntil = time_get() + time_freq() * 80 / 1000;
 }
 
 // 自动钓鱼：用左键模拟把武士刀稳定在解冻激光与霰弹枪激光的中间位置
