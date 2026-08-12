@@ -90,8 +90,6 @@ private:
 	bool m_CastActive = false; // 出钩后等待"已抛竿"，超时每秒重试
 	int64_t m_CastNextTime = 0;
 	int64_t m_TotalFishCoins = 0; // 累计钓获币值
-	int m_NoBaitCount = 0; // 10 秒窗口内"没有鱼饵"次数
-	int64_t m_NoBaitWindowStart = 0;
 	void CastRod();
 	void BuyBaitOnce();
 	void CheckAbnormalStop();
