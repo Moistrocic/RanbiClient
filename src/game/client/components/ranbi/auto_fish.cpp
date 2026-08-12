@@ -48,6 +48,14 @@ void CAutoFish::OnUpdate()
 	// 异常状态检查（玩家与准星距离超 20 格时自动终止）
 	CheckAbnormalStop();
 
+	// 出杆成功 1 秒后的延迟买饵（为下次出杆备饵）
+	if(m_BaitBuyDelayUntil != 0 && time_get() >= m_BaitBuyDelayUntil)
+	{
+		m_BaitBuyDelayUntil = 0;
+		if(g_Config.m_RcAutoBuyBait)
+			BuyBaitOnce();
+	}
+
 	// 出钩重试：出钩后未收到"已抛竿"确认，每秒重新出钩（放末尾避免被收线注入覆盖）
 	if(m_CastActive && time_get() >= m_CastNextTime)
 	{
@@ -384,13 +392,13 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 
 	// 规则 3/4/6 已移除：鱼饵购买改为出钩前执行（见 CastRod，受 rc_auto_buy_bait 开关控制）
 
-	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数；出杆成功后购买鱼饵（为下次出杆备饵）
+	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数；出杆成功 1 秒后购买鱼饵（为下次出杆备饵）
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))
 	{
 		m_CastActive = false;
 		m_CastRetryCount = 0;
 		if(g_Config.m_RcAutoBuyBait)
-			BuyBaitOnce();
+			m_BaitBuyDelayUntil = time_get() + time_freq();
 	}
 }
 

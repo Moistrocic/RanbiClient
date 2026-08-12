@@ -88,6 +88,7 @@ private:
 	int64_t m_CastNextTime = 0;
 	int m_CastRetryCount = 0; // 当前出钩周期内的重试次数（成功抛竿后清零）
 	int64_t m_TotalFishCoins = 0; // 累计钓获币值
+	int64_t m_BaitBuyDelayUntil = 0; // 出杆成功后的延迟买饵时刻（1 秒后）
 	void CastRod();
 	void BuyBaitOnce();
 	void CheckAbnormalStop();
