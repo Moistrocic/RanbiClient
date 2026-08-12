@@ -260,7 +260,7 @@ void CMenus::RenderRanbiSettings(CUIRect MainView)
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcLockAim, RCLocalize("Lock aim on map tile"), &g_Config.m_RcLockAim, &Column, s_LineSize);
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAutoFishStopOutOfRange, RCLocalize("Stop when out of range"), &g_Config.m_RcAutoFishStopOutOfRange, &Column, s_LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcAutoFishStopOutOfRange, RCLocalize("Auto stop on abnormal"), &g_Config.m_RcAutoFishStopOutOfRange, &Column, s_LineSize);
 
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 

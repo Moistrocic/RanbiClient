@@ -108,15 +108,7 @@ void CAutoFish::OnUpdate()
 				m_BuyBaitNextCheckTime = Now;
 			if(Now >= m_BuyBaitNextCheckTime)
 			{
-				int OptionId = 0;
-				for(const CVoteOptionClient *pOption = GameClient()->m_Voting.FirstOption(); pOption; pOption = pOption->m_pNext, OptionId++)
-				{
-					if(str_find_nocase(pOption->m_aDescription, "购买鱼饵"))
-					{
-						GameClient()->m_Voting.CallvoteOption(OptionId, "", false);
-						break;
-					}
-				}
+				BuyBaitOnce();
 				m_BuyBaitNextCheckTime = Now + time_freq() * 30; // 固定 30 秒检查一次
 			}
 		}
@@ -133,8 +125,18 @@ void CAutoFish::OnUpdate()
 	// 检测玩家上方 15x7 区域内的钓鱼目标（武士刀/解冻激光/霰弹枪激光）
 	UpdateRegionTargets();
 
+	// 出钩重试：出钩后未收到"已抛竿"确认，每秒重新出钩
+	if(m_CastActive && time_get() >= m_CastNextTime)
+	{
+		FireRepress();
+		m_CastNextTime = time_get() + time_freq();
+	}
+
 	// 自动钓鱼控制（用左键模拟把武士刀稳定在解冻激光与霰弹枪激光中间）
 	UpdateAutoFishing();
+
+	// 异常状态检查（玩家与准星距离超 20 格时自动终止）
+	CheckAbnormalStop();
 
 	// 节流输出检测结果（调试）
 	const int64_t Now = time_get();
@@ -270,6 +272,8 @@ void CAutoFish::UpdateAutoFishing()
 {
 	if(!g_Config.m_RcAutoFishing)
 		return;
+	if(!m_FishingActive) // 收到"鱼上钩了"消息后才激活收线控制
+		return;
 	if(!m_Targets.m_Valid || !m_Targets.m_HasKatana || !m_Targets.m_HasUnfreeze || !m_Targets.m_HasShotgun)
 		return;
 
@@ -299,6 +303,53 @@ void CAutoFish::UpdateAutoFishing()
 		FireHold();
 	else if(m_Targets.m_KatanaX > Mid + Tolerance)
 		FireRelease();
+}
+
+// 出钩（抛竿）：执行重新按住左键，并激活每秒重试直到收到"已抛竿"
+void CAutoFish::CastRod()
+{
+	FireRepress();
+	m_CastActive = true;
+	m_CastNextTime = time_get() + time_freq();
+}
+
+// 执行一次鱼饵购买：遍历投票选项匹配"购买鱼饵"并触发
+void CAutoFish::BuyBaitOnce()
+{
+	int OptionId = 0;
+	for(const CVoteOptionClient *pOption = GameClient()->m_Voting.FirstOption(); pOption; pOption = pOption->m_pNext, OptionId++)
+	{
+		if(str_find_nocase(pOption->m_aDescription, "购买鱼饵"))
+		{
+			GameClient()->m_Voting.CallvoteOption(OptionId, "", false);
+			break;
+		}
+	}
+}
+
+// 异常状态检查：玩家与准星在地图坐标距离超过 20 格时自动关闭自动钓鱼
+void CAutoFish::CheckAbnormalStop()
+{
+	if(!g_Config.m_RcAutoFishStopOutOfRange)
+		return;
+	if(!g_Config.m_RcAutoFishing) // 已关闭则不再检查
+		return;
+
+	const int Dummy = g_Config.m_ClDummy;
+	const int LocalId = GameClient()->m_aLocalIds[Dummy];
+	if(LocalId < 0 || LocalId >= MAX_CLIENTS || !GameClient()->m_aClients[LocalId].m_Active)
+		return;
+
+	// 准星世界坐标 = 相机中心 + 光标偏移
+	const vec2 CursorPos = GameClient()->m_Camera.m_Center + GameClient()->m_Controls.m_aMousePos[Dummy];
+	const float Dist = distance(GameClient()->m_LocalCharacterPos, CursorPos);
+	if(Dist > 20.0f * 32.0f)
+	{
+		g_Config.m_RcAutoFishing = 0;
+		m_FishingActive = false;
+		m_CastActive = false;
+		dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles), auto fishing stopped", Dist);
+	}
 }
 
 // AUTO FISH m_RcLockAim：锁定光标瞄准的地图位置
@@ -394,6 +445,67 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 	if(ConsoleTriggerCheck(pCategory, "%s entered and joined the game", aName))
 	{
 		dbg_msg("ranbi/dbg", "name:%s", aName);
+	}
+
+	// 规则 1：鱼上钩 → 激活自动钓鱼收线控制
+	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 鱼上钩了！"))
+	{
+		m_FishingActive = true;
+	}
+
+	// 规则 2：钓到鱼 → 关闭收线控制、累计币值并出钩
+	{
+		char aFish[64];
+		int Price = 0;
+		if(ConsoleTriggerCheck("chat/server", "[钓鱼] 钓到%s，价值 %d 币", aFish, &Price))
+		{
+			m_FishingActive = false;
+			m_TotalFishCoins += Price;
+			dbg_msg("ranbi/autofish", "caught '%s' +%d coins, total %lld", aFish, Price, m_TotalFishCoins);
+			CastRod();
+		}
+	}
+
+	// 规则 3：购买鱼饵成功 → 当前数量不足时继续购买
+	{
+		int Bought = 0, Cur = 0, Max = 0;
+		if(ConsoleTriggerCheck("chat/server", "[商店] 购买鱼饵成功 %d 个，当前 %d/%d 个", &Bought, &Cur, &Max))
+		{
+			if(Cur < Max)
+				BuyBaitOnce();
+		}
+	}
+
+	// 规则 4/6：没有鱼饵了 → 购买并出钩；10 秒内出现 3 次且开启异常终止时关闭自动钓鱼
+	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 没有鱼饵了，请到商店购买"))
+	{
+		const int64_t Now = time_get();
+		if(m_NoBaitWindowStart == 0 || Now - m_NoBaitWindowStart > time_freq() * 10)
+		{
+			m_NoBaitWindowStart = Now;
+			m_NoBaitCount = 1;
+		}
+		else
+		{
+			m_NoBaitCount++;
+		}
+		if(m_NoBaitCount >= 3 && g_Config.m_RcAutoFishStopOutOfRange)
+		{
+			g_Config.m_RcAutoFishing = 0;
+			m_FishingActive = false;
+			dbg_msg("ranbi/autofish", "no bait 3 times in 10s, auto fishing stopped");
+		}
+		else
+		{
+			BuyBaitOnce();
+			CastRod();
+		}
+	}
+
+	// 规则 5：已抛竿 → 停止出钩重试
+	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))
+	{
+		m_CastActive = false;
 	}
 }
 
