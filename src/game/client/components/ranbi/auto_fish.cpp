@@ -19,7 +19,6 @@ void CAutoFish::OnReset()
 	m_LockAimTarget = vec2(0, 0);
 	m_LockAimSavedZoom = 1.0f;
 
-	m_DebugLaserNextPrintTime = 0;
 }
 
 void CAutoFish::OnUpdate()
@@ -390,7 +389,7 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 		}
 	}
 
-	// 规则 3/4/6 已移除：鱼饵购买改为出钩前执行（见 CastRod，受 rc_auto_buy_bait 开关控制）
+	// 规则 3/4/6 已移除：鱼饵购买改为出杆成功 1 秒后执行 + 出杆重试时补买（受 rc_auto_buy_bait 开关控制）
 
 	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数；出杆成功 1 秒后购买鱼饵（为下次出杆备饵）
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))

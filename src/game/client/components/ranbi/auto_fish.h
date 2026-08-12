@@ -73,7 +73,6 @@ private:
 		float m_StaminaToX = 0.0f;
 	} m_Targets;
 	void UpdateRegionTargets();
-	int64_t m_DebugLaserNextPrintTime;
 	// 左键模拟与自动钓鱼控制（rc_auto_fishing）
 	bool m_FireInjected = false;
 	bool m_FireRepressPending = false; // FireRepress 进行中（松开保持阶段）
