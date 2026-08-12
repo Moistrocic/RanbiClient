@@ -63,7 +63,7 @@ private:
 	std::vector<int> m_vConsoleTriggerBases;
 	bool ConsoleTriggerCheck(const char *pCategory, const char *pPattern, ...);
 	bool ConsoleTriggerBuildRegex(const char *pPattern);
-	// 玩家上方 15x7 区域内的钓鱼目标检测（武士刀/解冻激光/霰弹枪激光的 x 坐标）
+	// 玩家上方 15x7 区域内的钓鱼目标检测（武士刀/解冻激光/霰弹枪激光的 x 坐标、体力条范围）
 	struct SAutoFishTargets
 	{
 		bool m_Valid = false;
@@ -73,9 +73,9 @@ private:
 		float m_UnfreezeX = 0.0f;
 		bool m_HasShotgun = false;
 		float m_ShotgunX = 0.0f;
-		bool m_HasFreeze = false;
-		float m_FreezeFromX = 0.0f;
-		float m_FreezeToX = 0.0f;
+		bool m_HasStamina = false;
+		float m_StaminaFromX = 0.0f;
+		float m_StaminaToX = 0.0f;
 	} m_Targets;
 	void UpdateRegionTargets();
 	int64_t m_DebugLaserNextPrintTime;

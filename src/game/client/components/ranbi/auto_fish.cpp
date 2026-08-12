@@ -132,11 +132,11 @@ void CAutoFish::OnUpdate()
 		m_DebugLaserNextPrintTime = Now + time_freq() / 2;
 		if(m_Targets.m_Valid)
 		{
-			dbg_msg("ranbi/autofish", "targets katana=%s(%.0f) unfreeze=%s(%.0f) shotgun=%s(%.0f) freeze=%s(%.0f->%.0f)",
+			dbg_msg("ranbi/autofish", "targets katana=%s(%.0f) unfreeze=%s(%.0f) shotgun=%s(%.0f) stamina=%s(%.0f->%.0f)",
 				m_Targets.m_HasKatana ? "Y" : "N", m_Targets.m_KatanaX,
 				m_Targets.m_HasUnfreeze ? "Y" : "N", m_Targets.m_UnfreezeX,
 				m_Targets.m_HasShotgun ? "Y" : "N", m_Targets.m_ShotgunX,
-				m_Targets.m_HasFreeze ? "Y" : "N", m_Targets.m_FreezeFromX, m_Targets.m_FreezeToX);
+				m_Targets.m_HasStamina ? "Y" : "N", m_Targets.m_StaminaFromX, m_Targets.m_StaminaToX);
 		}
 	}
 }
@@ -207,9 +207,10 @@ void CAutoFish::UpdateRegionTargets()
 			}
 			else if(pLaser->m_Type == LASERTYPE_FREEZE)
 			{
-				m_Targets.m_FreezeFromX = From.x;
-				m_Targets.m_FreezeToX = To.x;
-				m_Targets.m_HasFreeze = true;
+				// 体力条：水平激光，to.x 随收线/张力变化
+				m_Targets.m_StaminaFromX = From.x;
+				m_Targets.m_StaminaToX = To.x;
+				m_Targets.m_HasStamina = true;
 			}
 			break;
 		}
