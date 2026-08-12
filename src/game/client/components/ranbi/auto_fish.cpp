@@ -124,6 +124,10 @@ void CAutoFish::UpdateRegionTargets()
 		case NETOBJTYPE_DDNETLASER:
 		{
 			const CNetObj_DDNetLaser *pLaser = (const CNetObj_DDNetLaser *)Item.m_pData;
+			// 过滤其他玩家的激光：钓鱼进度激光为服务器实体（owner=-1）或自己的激光，
+			// 其他玩家发射的激光带其玩家 ID（owner>=0 且非本地）
+			if(pLaser->m_Owner >= 0 && pLaser->m_Owner != LocalId)
+				break;
 			const vec2 From(pLaser->m_FromX, pLaser->m_FromY);
 			const vec2 To(pLaser->m_ToX, pLaser->m_ToY);
 			const bool InFrom = From.x >= MinX && From.x < MaxX && From.y >= MinY && From.y < MaxY;
