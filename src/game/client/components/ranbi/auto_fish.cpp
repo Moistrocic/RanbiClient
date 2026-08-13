@@ -297,6 +297,8 @@ void CAutoFish::CheckAbnormalStop()
 		return;
 	if(!g_Config.m_RcAutoFishing) // 已关闭则不再检查
 		return;
+	if(GameClient()->m_Snap.m_SpecInfo.m_Active) // 旁观状态不执行检测
+		return;
 
 	const int Dummy = g_Config.m_ClDummy;
 	const int LocalId = GameClient()->m_aLocalIds[Dummy];
