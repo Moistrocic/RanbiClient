@@ -28,6 +28,8 @@ void CAutoFish::OnReset()
 	m_CastActive = false;
 	m_CastNextTime = 0;
 	m_CastRetryCount = 0;
+	m_CastLongRetry = false;
+	m_CastLongRetryCount = 0;
 	m_TotalFishCoins = 0;
 	m_BaitBuyDelayUntil = 0;
 	m_Targets = SAutoFishTargets{};
@@ -64,27 +66,45 @@ void CAutoFish::OnUpdate()
 			BuyBaitOnce();
 	}
 
-	// 出钩重试：出钩后未收到"已抛竿"确认，每秒重新出钩（放末尾避免被收线注入覆盖）
+	// 出钩重试：出钩后未收到"已抛竿"确认，按重试机制重新出钩（放末尾避免被收线注入覆盖）
 	if(m_CastActive && time_get() >= m_CastNextTime)
 	{
-		m_CastRetryCount++;
-		// 成功抛竿前重试超过 10 次：判为异常行为，自动关闭自动钓鱼（受异常终止开关控制）
-		if(m_CastRetryCount > 10 && g_Config.m_RcAutoFishStopOutOfRange)
+		if(m_CastLongRetry)
 		{
-			g_Config.m_RcAutoFishing = 0;
-			m_FishingActive = false;
-			m_CastActive = false;
-			m_BaitBuyDelayUntil = 0;
-			FireRelease();
-			dbg_msg("ranbi/autofish", "cast retry >10 times without success, auto fishing stopped");
-			return;
+			// 长重试：1 分钟一次，连续 5 次失败判 abnormal 关闭自动钓鱼（受异常终止开关控制）
+			m_CastLongRetryCount++;
+			if(m_CastLongRetryCount > 5 && g_Config.m_RcAutoFishStopOutOfRange)
+			{
+				g_Config.m_RcAutoFishing = 0;
+				m_FishingActive = false;
+				m_CastActive = false;
+				m_BaitBuyDelayUntil = 0;
+				FireRelease();
+				dbg_msg("ranbi/autofish", "long cast retry 5 times without success, auto fishing stopped (abnormal)");
+				return;
+			}
+			if(g_Config.m_RcAutoBuyBait)
+				BuyBaitOnce();
+			dbg_msg("ranbi/autofish", "long cast retry");
+			FireRepress();
+			m_CastNextTime = time_get() + time_freq() * 60;
 		}
-		// 重试前同样补一次鱼饵（开启自动买饵时）
-		if(g_Config.m_RcAutoBuyBait)
-			BuyBaitOnce();
-		dbg_msg("ranbi/autofish", "cast retry");
-		FireRepress();
-		m_CastNextTime = time_get() + time_freq();
+		else
+		{
+			// 普通重试：2 秒一次，满 5 次进入长重试
+			m_CastRetryCount++;
+			if(m_CastRetryCount >= 5)
+			{
+				m_CastLongRetry = true;
+				m_CastLongRetryCount = 0;
+				dbg_msg("ranbi/autofish", "cast retry 5 times, entering long retry (60s interval)");
+			}
+			if(g_Config.m_RcAutoBuyBait)
+				BuyBaitOnce();
+			dbg_msg("ranbi/autofish", "cast retry");
+			FireRepress();
+			m_CastNextTime = time_get() + time_freq() * (m_CastLongRetry ? 60 : 2);
+		}
 	}
 }
 
@@ -238,14 +258,17 @@ void CAutoFish::UpdateAutoFishing()
 		FireRelease();
 }
 
-// 出钩（抛竿）：执行重新按住左键，并激活每秒重试直到收到"已抛竿"
+// 出钩（抛竿）：执行重新按住左键，并激活重试机制直到收到"已抛竿"
+// 重试机制：普通重试 2 秒一次，满 5 次进入长重试（1 分钟一次），长重试满 5 次判 abnormal 关闭
 // 注：首次出杆不购买鱼饵（购买在出杆成功后进行，重试时补买作为保险）
 void CAutoFish::CastRod()
 {
 	m_CastRetryCount = 0;
+	m_CastLongRetry = false;
+	m_CastLongRetryCount = 0;
 	FireRepress();
 	m_CastActive = true;
-	m_CastNextTime = time_get() + time_freq();
+	m_CastNextTime = time_get() + time_freq() * 2;
 }
 
 // 执行一次鱼饵购买：遍历投票选项匹配"购买鱼饵"并触发
@@ -414,11 +437,13 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 
 	// 规则 3/4/6 已移除：鱼饵购买改为出杆成功 1 秒后执行 + 出杆重试时补买（受 rc_auto_buy_bait 开关控制）
 
-	// 规则 5：已抛竿 → 停止出钩重试并清零重试计数；出杆成功 1 秒后购买鱼饵（为下次出杆备饵）
+	// 规则 5：已抛竿 → 停止出钩重试并清零重试状态；出杆成功 1 秒后购买鱼饵（为下次出杆备饵）
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))
 	{
 		m_CastActive = false;
 		m_CastRetryCount = 0;
+		m_CastLongRetry = false;
+		m_CastLongRetryCount = 0;
 		if(g_Config.m_RcAutoBuyBait)
 			m_BaitBuyDelayUntil = time_get() + time_freq();
 	}
