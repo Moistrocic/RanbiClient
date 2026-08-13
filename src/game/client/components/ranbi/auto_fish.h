@@ -88,6 +88,7 @@ private:
 	int m_CastRetryCount = 0; // 普通重试计数（2 秒一次，满 5 次进入长重试）
 	bool m_CastLongRetry = false; // 长重试模式（1 分钟一次）
 	int m_CastLongRetryCount = 0; // 长重试计数（满 5 次判 abnormal 关闭）
+	int64_t m_AbnormalStartTime = 0; // 准星超距持续计时（持续 0.5 秒才判定异常）
 	int64_t m_TotalFishCoins = 0; // 累计钓获币值
 	int64_t m_BaitBuyDelayUntil = 0; // 出杆成功后的延迟买饵时刻（1 秒后）
 	void CastRod();

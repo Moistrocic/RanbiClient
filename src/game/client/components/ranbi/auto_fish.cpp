@@ -30,6 +30,7 @@ void CAutoFish::OnReset()
 	m_CastRetryCount = 0;
 	m_CastLongRetry = false;
 	m_CastLongRetryCount = 0;
+	m_AbnormalStartTime = 0;
 	m_TotalFishCoins = 0;
 	m_BaitBuyDelayUntil = 0;
 	m_Targets = SAutoFishTargets{};
@@ -315,12 +316,23 @@ void CAutoFish::CheckAbnormalStop()
 	const float PlayerCursorDist = distance(PlayerPos, CursorPos);
 	if(PlayerCursorDist > 20.0f * 32.0f)
 	{
-		g_Config.m_RcAutoFishing = 0;
-		m_FishingActive = false;
-		m_CastActive = false;
-		m_BaitBuyDelayUntil = 0;
-		FireRelease();
-		dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles), auto fishing stopped", PlayerCursorDist);
+		// 持续超距 0.5 秒才判定异常（避免旁观切换/光标残留等瞬时误判）
+		if(m_AbnormalStartTime == 0)
+			m_AbnormalStartTime = time_get();
+		else if(time_get() - m_AbnormalStartTime > time_freq() / 2)
+		{
+			g_Config.m_RcAutoFishing = 0;
+			m_FishingActive = false;
+			m_CastActive = false;
+			m_BaitBuyDelayUntil = 0;
+			m_AbnormalStartTime = 0;
+			FireRelease();
+			dbg_msg("ranbi/autofish", "cursor too far (%.0f units > 20 tiles) for 0.5s, auto fishing stopped", PlayerCursorDist);
+		}
+	}
+	else
+	{
+		m_AbnormalStartTime = 0;
 	}
 }
 
