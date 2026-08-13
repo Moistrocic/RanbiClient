@@ -26,6 +26,7 @@ void CAutoFish::OnReset()
 	m_FireRepressReleaseUntil = 0;
 	m_FishingActive = false;
 	m_CastActive = false;
+	m_WaitingBite = false;
 	m_CastNextTime = 0;
 	m_CastRetryCount = 0;
 	m_CastLongRetry = false;
@@ -226,6 +227,12 @@ void CAutoFish::UpdateAutoFishing()
 {
 	if(!g_Config.m_RcAutoFishing)
 		return;
+	// 空闲未出杆状态（未收线、未在出杆重试、未在等待咬钩）：自动出杆，由重试机制接管
+	if(!m_FishingActive && !m_CastActive && !m_WaitingBite)
+	{
+		CastRod();
+		return;
+	}
 	if(!m_FishingActive) // 收到"鱼上钩了"消息后才激活收线控制
 		return;
 	if(!m_Targets.m_Valid || !m_Targets.m_HasKatana || !m_Targets.m_HasUnfreeze || !m_Targets.m_HasShotgun)
@@ -267,6 +274,7 @@ void CAutoFish::CastRod()
 	m_CastRetryCount = 0;
 	m_CastLongRetry = false;
 	m_CastLongRetryCount = 0;
+	m_WaitingBite = false;
 	FireRepress();
 	m_CastActive = true;
 	m_CastNextTime = time_get() + time_freq() * 2;
@@ -429,6 +437,7 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 	{
 		m_FishingActive = true;
 		m_CastActive = false;
+		m_WaitingBite = false;
 	}
 
 	// 规则 2：钓到鱼 → 关闭收线控制、累计币值并重新出钩（续钓）
@@ -451,13 +460,14 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 
 	// 规则 3/4/6 已移除：鱼饵购买改为出杆成功 1 秒后执行 + 出杆重试时补买（受 rc_auto_buy_bait 开关控制）
 
-	// 规则 5：已抛竿 → 停止出钩重试并清零重试状态；出杆成功 1 秒后购买鱼饵（为下次出杆备饵）
+	// 规则 5：已抛竿 → 停止出钩重试并清零重试状态，进入等待咬钩；出杆成功 1 秒后购买鱼饵（为下次出杆备饵）
 	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 已抛竿"))
 	{
 		m_CastActive = false;
 		m_CastRetryCount = 0;
 		m_CastLongRetry = false;
 		m_CastLongRetryCount = 0;
+		m_WaitingBite = true;
 		if(g_Config.m_RcAutoBuyBait)
 			m_BaitBuyDelayUntil = time_get() + time_freq();
 	}

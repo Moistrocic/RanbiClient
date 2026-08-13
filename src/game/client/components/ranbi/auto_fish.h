@@ -84,6 +84,7 @@ private:
 	// 自动钓鱼状态机（控制台消息驱动）
 	bool m_FishingActive = false; // 鱼上钩后激活收线控制
 	bool m_CastActive = false; // 出钩后等待"已抛竿"，超时重试
+	bool m_WaitingBite = false; // 已抛竿成功，等待鱼上钩（不自动再出杆）
 	int64_t m_CastNextTime = 0;
 	int m_CastRetryCount = 0; // 普通重试计数（2 秒一次，满 5 次进入长重试）
 	bool m_CastLongRetry = false; // 长重试模式（1 分钟一次）
