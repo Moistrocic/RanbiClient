@@ -230,6 +230,7 @@ void CAutoFish::OnUpdate()
 			m_FishData.m_AbnormalCount++;
 			LogFishError("空闲状态超过 1 分钟无变化，重置空闲状态");
 			SetFishState(EFishState::Idle, "等待 1 分钟无变化", false);
+			m_StateChangeTime = time_get();
 			break;
 		}
 		if(m_CastRetryCount == 0)
@@ -475,7 +476,10 @@ void CAutoFish::BuyBaitOnce()
 		}
 	}
 	if(!Found)
+	{
 		EchoFish("购买鱼饵：未找到购买鱼饵的投票选项（共 %d 个）", OptionId);
+		LogFishError("购买鱼饵失败：未找到购买鱼饵的投票选项（共 %d 个）", OptionId);
+	}
 }
 
 // 异常状态检查：玩家与准星在地图坐标距离超过 20 格时进入空闲锁定状态，等待手动抛竿解锁
@@ -655,6 +659,17 @@ void CAutoFish::OnMessage(int Msg, void *pRawMsg)
 		m_FishData.m_AbnormalCount++;
 		LogFishError("收竿太慢，钓鱼失败一次，不影响功能正常运行");
 		SetFishState(EFishState::Idle, "收竿太慢", true);
+	}
+
+	// 鱼饵不足
+	if(ConsoleTriggerCheck("chat/server", "[商店] 余额不足，鱼饵每个 5 币"))
+	{
+		LogFishError("购买鱼饵失败：余额不足");
+	}
+
+	if(ConsoleTriggerCheck("chat/server", "[钓鱼] 没有鱼饵了，请到商店购买"))
+	{
+		LogFishError("钓鱼失败：没有鱼饵了");
 	}
 
 	// 玩家主动取消抛竿 → 空闲并锁定，等待玩家手动抛竿解锁
