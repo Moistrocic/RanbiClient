@@ -247,7 +247,7 @@ void CAutoFish::OnUpdate()
 		if(m_CastRetryCount < 7200LL)
 		{
 			EchoFish("出杆重试（%lld 次）", m_CastRetryCount);
-			if(m_CastRetryCount % 5 == 0)
+			if(m_CastRetryCount % 50 == 1)
 				LogFishError("出杆重试（%lld 次）", m_CastRetryCount);
 			if(g_Config.m_RcAutoBuyBait)
 			{
