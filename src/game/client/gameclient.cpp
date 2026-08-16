@@ -119,7 +119,6 @@ void CGameClient::OnConsoleInit()
 	m_vpAll.insert(m_vpAll.end(), {&m_RenderProxy, // RanbiClient
 					      &m_Points, // RanbiClient
 					      &m_RanbiClient, // RanbiClient
-					      &m_AutoFish, // RanbiClient
 					      &m_AiClient, // RanbiClient
 					      &m_Skins,
 					      &m_Skins7,
@@ -153,6 +152,7 @@ void CGameClient::OnConsoleInit()
 					      &m_MapLayersForeground,
 					      &m_MovingTilesForeground, // TClient
 					      &m_Outlines, // TClient
+					      &m_AutoFish, // RanbiClient (Must be atfer outlines)
 					      &m_Mumble, // TClient
 					      &m_Pet, // TClient
 					      &m_Particles.m_RenderExplosions,
