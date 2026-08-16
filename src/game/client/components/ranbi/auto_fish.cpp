@@ -35,7 +35,7 @@ void CAutoFish::ResetFishing()
 
 	// 左键控制
 	m_FireHoldStartTime = 0;
-	m_FireHoldDruation = 0;
+	m_FireHoldDuration = 0;
 
 	// 异常处理
 	m_StateChangeTime = 0;
@@ -209,7 +209,7 @@ void CAutoFish::OnUpdate()
 	// 左键控制
 	if(m_FishState != EFishState::Locked && m_FishState != EFishState::Reel)
 	{
-		if(time_get() > m_FireHoldStartTime && time_get() < m_FireHoldStartTime + m_FireHoldDruation)
+		if(time_get() > m_FireHoldStartTime && time_get() < m_FireHoldStartTime + m_FireHoldDuration)
 			FireHold();
 		else
 			FireRelease();
@@ -408,10 +408,10 @@ void CAutoFish::FireHold()
 	GameClient()->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Fire = 1;
 }
 
-void CAutoFish::FireHold(int64_t druation_ms, int64_t start_delay_ms)
+void CAutoFish::FireHold(int64_t duration_ms, int64_t start_delay_ms)
 {
 	m_FireHoldStartTime = time_get() + start_delay_ms * time_freq() / 1000;
-	m_FireHoldDruation = druation_ms * time_freq() / 1000;
+	m_FireHoldDuration = duration_ms * time_freq() / 1000;
 }
 
 // 2. 模拟左键松开

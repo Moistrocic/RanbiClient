@@ -152,7 +152,7 @@ void CGameClient::OnConsoleInit()
 					      &m_MapLayersForeground,
 					      &m_MovingTilesForeground, // TClient
 					      &m_Outlines, // TClient
-					      &m_AutoFish, // RanbiClient (Must be atfer outlines)
+					      &m_AutoFish, // RanbiClient (Must be after outlines)
 					      &m_Mumble, // TClient
 					      &m_Pet, // TClient
 					      &m_Particles.m_RenderExplosions,

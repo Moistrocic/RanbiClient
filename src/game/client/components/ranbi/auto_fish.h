@@ -81,7 +81,7 @@ private:
 
 	// 左键模拟
 	int64_t m_FireHoldStartTime = 0;
-	int64_t m_FireHoldDruation = 0;
+	int64_t m_FireHoldDuration = 0;
 	void FireHold();
 	void FireHold(int64_t druation_ms, int64_t start_delay_ms);
 	void FireRelease();
