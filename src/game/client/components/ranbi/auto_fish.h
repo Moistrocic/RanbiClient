@@ -83,7 +83,7 @@ private:
 	int64_t m_FireHoldStartTime = 0;
 	int64_t m_FireHoldDuration = 0;
 	void FireHold();
-	void FireHold(int64_t druation_ms, int64_t start_delay_ms);
+	void FireHold(int64_t duration_ms, int64_t start_delay_ms);
 	void FireRelease();
 	// 自动控制钓鱼进度条
 	void ControlProgress();

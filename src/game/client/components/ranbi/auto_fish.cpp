@@ -207,7 +207,7 @@ void CAutoFish::OnUpdate()
 	}
 
 	// 左键控制
-	if(m_FishState != EFishState::Locked && m_FishState != EFishState::Reel)
+	if(m_FishState != EFishState::Locked)
 	{
 		if(time_get() > m_FireHoldStartTime && time_get() < m_FireHoldStartTime + m_FireHoldDuration)
 			FireHold();
@@ -444,6 +444,7 @@ void CAutoFish::ControlProgress()
 	}
 	if(m_Targets.m_KatanaX >= MaxX - BoundaryMargin)
 	{
+		FireHold(0, 0);
 		FireRelease();
 		return;
 	}
@@ -452,7 +453,10 @@ void CAutoFish::ControlProgress()
 	if(m_Targets.m_KatanaX < Mid - Tolerance)
 		FireHold(1000, 0);
 	else if(m_Targets.m_KatanaX > Mid + Tolerance)
+	{
+		FireHold(0, 0);
 		FireRelease();
+	}
 }
 
 // 执行一次鱼饵购买：遍历投票选项匹配"购买鱼饵"并触发
